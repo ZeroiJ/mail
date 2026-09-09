@@ -30,8 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - `EmailRepository` was a concrete data-layer class; refactored into `domain` interface + `data` implementation.
 
-### Notes
-- Font binaries for Geist (`geist_regular/medium/bold`) and N-Dot (`ndot`) are NOT yet committed — drop the `.ttf`/`.otf` files into `app/src/main/res/font/` so `R.font.*` resolves.
+### Added
+- Bundled font binaries: Geist Regular/Medium/Bold (OFL-1.1) and N-Dot 57 (OpenType) into `app/src/main/res/font/`, resolving `R.font.*` references in `ui/theme/Type.kt`.
 
 ## [0.0.0] - 2026-09-09
 - Project scaffolded: AGENTS.md system prompt, STRUCTURE.md layout reference, and initial data/Room layer.
