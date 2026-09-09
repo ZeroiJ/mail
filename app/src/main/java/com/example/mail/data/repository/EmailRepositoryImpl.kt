@@ -1,28 +1,37 @@
 package com.example.mail.data.repository
 
+import android.util.Base64
+import android.util.Log
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import com.example.mail.data.local.EmailDao
 import com.example.mail.data.local.EmailMessage
+import com.example.mail.data.remote.GmailApiService
+import com.example.mail.data.remote.dto.MessageDetailDto
+import com.example.mail.data.remote.dto.MessagePartDto
 import com.example.mail.domain.repository.EmailRepository
+import com.example.mail.util.AutoBundler
+import com.example.mail.util.BundleType
+import com.example.mail.util.GeminiProcessor
+import com.example.mail.util.TrackerStripper
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Room-backed implementation of [EmailRepository]. Local-only for now:
- * sources paging straight from the database. Network sync (Gmail REST)
- * will be layered on top later without touching the UI.
- */
 @Singleton
 class EmailRepositoryImpl @Inject constructor(
-    private val emailDao: EmailDao
+    private val emailDao: EmailDao,
+    private val gmailApi: GmailApiService,
+    private val gemini: GeminiProcessor
 ) : EmailRepository {
 
+    private val tag = "EmailRepoImpl"
+
     override fun getTriageQueueFlow(): Flow<PagingData<EmailMessage>> {
-        // Finite daily deck: bound to the last 24h so Inbox Zero stays attainable.
         val startOfDay = System.currentTimeMillis() - TimeUnit.HOURS.toMillis(24)
         return Pager(
             config = PagingConfig(
@@ -58,4 +67,119 @@ class EmailRepositoryImpl @Inject constructor(
     override suspend fun deleteEmail(email: EmailMessage) = emailDao.deleteEmail(email)
 
     override suspend fun deleteExpiredOtps() = emailDao.deleteExpiredOtps(System.currentTimeMillis())
+
+    override suspend fun syncRecentEmails(): Int = withContext(Dispatchers.IO) {
+        try {
+            val query = "newer_than:1d"
+            val listResponse = gmailApi.listMessages(q = query, maxResults = 50)
+            val summaries = listResponse.messages ?: return@withContext 0
+
+            if (summaries.isEmpty()) return@withContext 0
+
+            val newEmails = mutableListOf<EmailMessage>()
+
+            for (summary in summaries) {
+                try {
+                    val detail = gmailApi.getMessage(id = summary.id, format = "full")
+                    val entity = mapToEntity(detail)
+                    if (entity != null) {
+                        newEmails.add(entity)
+                    }
+                } catch (e: Exception) {
+                    Log.e(tag, "Failed to fetch message ${summary.id}: ${e.message}")
+                }
+            }
+
+            if (newEmails.isNotEmpty()) {
+                emailDao.insertEmails(newEmails)
+            }
+
+            Log.i(tag, "Sync complete: ${newEmails.size} messages upserted")
+            newEmails.size
+        } catch (e: Exception) {
+            Log.e(tag, "Sync failed: ${e.message}")
+            0
+        }
+    }
+
+    private suspend fun mapToEntity(detail: MessageDetailDto): EmailMessage? {
+        val headers = detail.payload?.headers
+        val sender = headers?.firstOrNull { it.name == "From" }?.value.orEmpty()
+        val subject = headers?.firstOrNull { it.name == "Subject" }?.value.orEmpty()
+        val snippet = detail.snippet.orEmpty()
+        val threadId = detail.threadId.orEmpty()
+        val timestamp = detail.internalDate?.toLongOrNull()?.div(1000)
+            ?: System.currentTimeMillis()
+
+        val rawHtml = extractHtmlBody(detail.payload) ?: ""
+        val cleanHtml = TrackerStripper.strip(rawHtml)
+        val plainText = htmlToPlainText(cleanHtml)
+
+        val otpCode = gemini.extractOtp(plainText)
+        val isOtp = otpCode.isNotEmpty()
+        val otpExpiry = if (isOtp) {
+            System.currentTimeMillis() + TimeUnit.HOURS.toMillis(24)
+        } else {
+            0L
+        }
+
+        val bundleType = AutoBundler.classify(sender, subject)
+
+        // Ensure OTP flag is set when AI detects a code OR bundler classifies as OTP.
+        val finalIsOtp = isOtp || bundleType == BundleType.OTP
+
+        return EmailMessage(
+            id = detail.id,
+            threadId = threadId,
+            sender = sender,
+            subject = subject,
+            snippet = snippet,
+            bodyHtml = cleanHtml,
+            bodyMarkdown = plainText,
+            timestamp = timestamp,
+            isOTP = finalIsOtp,
+            expiresAt = if (finalIsOtp) otpExpiry else 0L
+        )
+    }
+
+    private fun extractHtmlBody(part: MessagePartDto?): String? {
+        if (part == null) return null
+
+        if (part.mimeType == "text/html" && part.body?.data != null) {
+            return decodeBase64Url(part.body.data!!)
+        }
+
+        for (child in part.parts.orEmpty()) {
+            val found = extractHtmlBody(child)
+            if (found != null) return found
+        }
+
+        return null
+    }
+
+    private fun decodeBase64Url(data: String): String {
+        return try {
+            // Gmail uses URL-safe base64 without padding.
+            val padded = data.replace('-', '+').replace('_', '/')
+            val decoded = Base64.decode(padded, Base64.DEFAULT)
+            String(decoded, Charsets.UTF_8)
+        } catch (e: Exception) {
+            Log.w(tag, "Base64 decode failed: ${e.message}")
+            ""
+        }
+    }
+
+    private fun htmlToPlainText(html: String): String {
+        return html
+            .replace(Regex("<br\\s*/?>", RegexOption.IGNORE_CASE), "\n")
+            .replace(Regex("<[^>]+>"), "")
+            .replace(Regex("&nbsp;"), " ")
+            .replace(Regex("&amp;"), "&")
+            .replace(Regex("&lt;"), "<")
+            .replace(Regex("&gt;"), ">")
+            .replace(Regex("&quot;"), "\"")
+            .replace(Regex("&#39;"), "'")
+            .replace(Regex("\\s+"), " ")
+            .trim()
+    }
 }

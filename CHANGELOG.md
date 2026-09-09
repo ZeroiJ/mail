@@ -46,6 +46,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `MainActivity`: `@AndroidEntryPoint` with Compose `NavHost`, start destination → `TriageScreen`.
   - Added Hilt + Navigation Compose dependencies to `build.gradle.kts`.
   - Added `AndroidManifest.xml` with INTERNET permission and activity declaration.
+- **Data ingestion pipeline (`util/` + `data/repository/`):**
+  - `TrackerStripper`: detects and neutralizes 1×1 transparent tracking pixels from email HTML using dimension, inline style, and known-domain heuristics.
+  - `AutoBundler`: classifies emails into bundles (RECEIPT, NEWSLETTER, LOGISTICS, SOCIAL, OTP, PERSONAL) via sender domain and subject-line regex patterns.
+  - `EmailRepositoryImpl.syncRecentEmails()`: full pipeline — fetches Gmail REST → extracts HTML → strips trackers → AI OTP detection → auto-bundles → upserts Room entities, all on `Dispatchers.IO`.
+  - `TriageViewModel.syncRecentEmails()` + `isSyncing` StateFlow for pull-to-refresh loading state.
 
 ## [0.0.0] - 2026-09-09
 - Project scaffolded: AGENTS.md system prompt, STRUCTURE.md layout reference, and initial data/Room layer.

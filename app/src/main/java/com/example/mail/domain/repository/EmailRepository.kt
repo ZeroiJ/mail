@@ -25,4 +25,11 @@ interface EmailRepository {
     suspend fun deleteEmail(email: EmailMessage)
 
     suspend fun deleteExpiredOtps()
+
+    /**
+     * Pull recent emails from Gmail REST, strip trackers, run AI parsing,
+     * classify bundles, and upsert into Room. Returns the number of new
+     * or updated messages inserted.
+     */
+    suspend fun syncRecentEmails(): Int
 }
