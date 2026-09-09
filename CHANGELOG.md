@@ -1,0 +1,37 @@
+# Changelog
+
+All notable changes to this project are documented here.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+- **Data layer (Room + Paging 3):**
+  - `EmailMessage` Room entity matching the AGENTS.md schema (including `isOTP`, `expiresAt`, `bodyMarkdown`).
+  - `EmailDao` with insert/update/delete CRUD and paged queries for the triage queue, all emails, and OTP cards.
+  - `MailDatabase` singleton with DAO accessor.
+  - `EmailRepository` split into a pure domain interface (`domain/repository/`) and a Room-backed `EmailRepositoryImpl` wiring Paging 3 `Pager`s.
+- **Remote layer (Gmail REST API):**
+  - `GmailApiService` Retrofit interface (`listMessages`, `getMessage`).
+  - `AuthInterceptor` attaching an OAuth2 Bearer token to every request.
+  - Gmail DTOs for message list/detail payloads.
+  - `NetworkModule` (Hilt) providing `OkHttpClient` + Retrofit with Kotlinx Serialization.
+- **Nothing OS design system (`ui/theme/`):**
+  - Strict monochrome palette (`Color.kt`): OLED black, dark gray surfaces, muted secondary, stark red reserved for alerts/destructive/OTP.
+  - Typography mapping (`Type.kt`): NDot (dot-matrix) for Display/Headline, Geist (sans-serif) for Title/Body/Label.
+  - `NothingTheme` with a fixed dark scheme and dynamic color disabled.
+  - Monochrome XML theme + font resource placeholders.
+- **Tooling:**
+  - `.github/workflows/release.yml`: build debug APK and publish a GitHub Release on `v*` tags.
+  - `CHANGELOG.md` + git workflow conventions documented in `AGENTS.md`.
+
+### Changed
+- `EmailRepository` was a concrete data-layer class; refactored into `domain` interface + `data` implementation.
+
+### Notes
+- Font binaries for Geist (`geist_regular/medium/bold`) and N-Dot (`ndot`) are NOT yet committed — drop the `.ttf`/`.otf` files into `app/src/main/res/font/` so `R.font.*` resolves.
+
+## [0.0.0] - 2026-09-09
+- Project scaffolded: AGENTS.md system prompt, STRUCTURE.md layout reference, and initial data/Room layer.

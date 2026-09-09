@@ -51,6 +51,7 @@
   - Format: `type(scope): short summary` (e.g. `feat(data): add EmailMessage Room entity`, `refactor(repo): route paging through EmailRepository`). Choose `feat` / `fix` / `refactor` / `chore` / `docs` / `test` as appropriate.
   - When a commit is logically non-trivial, add a short body (blank line, then bullet points) explaining intent — not a recap of the code.
 - **Avoid:** placeholder messages ("wip", "stuff", "changes"), highly generic messages, or dumping unrelated formatting changes into feature commits.
+- **Changelog:** Keep `CHANGELOG.md` up to date under `## [Unreleased]`. Add a bullet for every user-visible or structural change, grouped under `Added` / `Changed` / `Fixed` / `Removed`. On a version release, move the entries into a dated `## [x.y.z]` section and tag it. Never let a working turn end with code changes but no changelog entry.
 - Pick the right moment to leave the repo in a clean, pushable state at the end of each working turn (full commit + push), but still split the intermediate steps into clean atomic commits rather than one giant push.
 
 ## Project Workflow Rules
