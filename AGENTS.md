@@ -44,6 +44,14 @@
 - **Placement:** Room/DB → `data/local/`; Gmail REST → `data/remote/`; repository impls → `data/repository/`; repository interfaces + pure models → `domain/`; composables → `ui/`; regex/tracker parsing → `util/`.
 - **Rule:** Full layout reference lives in `STRUCTURE.md`. Consult it before placing any new file.
 
+## Security & Anti-Exploit Protocol
+- **Zero-Trust Storage:** All Room databases MUST be encrypted using SQLCipher (`net.zetetic:sqlcipher-android`). The master key MUST be generated and stored EXCLUSIVELY in the Android Keystore, never in code, SharedPreferences, or plain files. `di/DatabaseModule.kt` must inject the SQLCipher `SupportFactory` into the Room database builder so encryption applies from first creation.
+- **Memory/Screen Isolation:** `MainActivity` MUST set `WindowManager.LayoutParams.FLAG_SECURE` before `setContent` to block OS background snapshots and screen recording. App launch and every resume-from-background state MUST be gated by a `BiometricPrompt` before any email content is rendered.
+- **Component Isolation:** Every component declared in `AndroidManifest.xml` (Activity, Service, Receiver, Provider) MUST enforce `android:exported="false"` unless it is the launcher activity. No component may be exported for implicit external access.
+- **Payload Sandboxing:** Any `WebView` rendering raw email HTML MUST explicitly disable JavaScript, local file access, and content access. A `res/xml/network_security_config.xml` MUST ban cleartext traffic (`cleartextTrafficPermitted="false"`), referenced from the application-level `android:networkSecurityConfig`.
+- **Build Hardening:** Release builds MUST enable R8 minification/obfuscation (`isMinifyEnabled = true`) and ship ProGuard rules that strip all `android.util.Log` calls (`-assumenosideeffects class android.util.Log { ... }`) plus shrink resources. Zero secrets (client IDs, API keys, tokens) may be compiled into release binaries — all credentials resolve at runtime.
+- **Biometric Fallback:** If the device has no biometric hardware enrolled, fall back to device credential (PIN/pattern/password) authentication — never a silent bypass.
+
 ## Git Workflow (Commit & Push Discipline)
 - **Remote:** Push to `origin` / branch `main` (https://github.com/ZeroiJ/mail.git).
 - **Commit frequency:** Commit and push in small, well-scoped increments — one logical unit per commit. Do not batch unrelated work into a single commit.
