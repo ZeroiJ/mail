@@ -2,6 +2,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp")
+    id("org.jetbrains.kotlin.plugin.serialization")
 }
 
 android {
@@ -74,6 +75,14 @@ dependencies {
     val pagingVersion = "3.2.1"
     implementation("androidx.paging:paging-runtime:$pagingVersion")
     implementation("androidx.paging:paging-compose:$pagingVersion")
+
+    // Network — Retrofit + OkHttp + Kotlinx Serialization
+    val retrofitVersion = "2.9.0"
+    implementation("com.squareup.retrofit2:retrofit:$retrofitVersion")
+    implementation("com.squareup.retrofit2:converter-kotlinx-serialization:$retrofitVersion")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
     // Testing
     testImplementation("junit:junit:4.13.2")
