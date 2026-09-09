@@ -85,7 +85,20 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
-    // Testing
+    // Google AI Edge — on-device Gemini Nano via Android AICore
+    val aiEdgeVersion = "1.0.1"
+    implementation("com.google.ai.edge.litert:litert:$aiEdgeVersion")
+    implementation("com.google.ai.edge.litert:litert-support:$aiEdgeVersion")
+    implementation("com.google.ai.edge.litert:litert-gpu:$aiEdgeVersion")
+    implementation("com.google.ai.edge.litert:litert-gpu-api:$aiEdgeVersion")
+
+    // Navigation Compose
+    implementation("androidx.navigation:navigation-compose:2.7.7")
+
+    // Hilt — dependency injection
+    implementation("com.google.dagger:hilt-android:2.48")
+    ksp("com.google.dagger:hilt-compiler:2.48")
+    implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")

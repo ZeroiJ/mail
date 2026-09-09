@@ -39,6 +39,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Triage queue screen (`ui/screens/triage/`):**
   - `TriageViewModel`: `@HiltViewModel` injecting `EmailRepository`, exposing paged triage queue and OTP flows, with `delete()`, `archive()`, `snooze()` action handlers.
   - `TriageScreen`: Nothing-themed triage UI with N-Dot header, OTP widget section, paginated card-deck with directional swipe gestures (left→delete/red, right→archive, up→snooze), and anchored `FloatingIsland` overlay.
+- **On-device AI integration (`util/`):**
+  - `GeminiProcessor`: Google AI Edge / Android AICore wrapper with `generateThreadSummary()`, `extractActionableData()`, and `extractOtp()` — falls back to regex/heuristic when Gemini Nano is unavailable.
+- **App entry & navigation:**
+  - `MailApp`: `@HiltAndroidApp` Application class registered in `AndroidManifest.xml`.
+  - `MainActivity`: `@AndroidEntryPoint` with Compose `NavHost`, start destination → `TriageScreen`.
+  - Added Hilt + Navigation Compose dependencies to `build.gradle.kts`.
+  - Added `AndroidManifest.xml` with INTERNET permission and activity declaration.
 
 ## [0.0.0] - 2026-09-09
 - Project scaffolded: AGENTS.md system prompt, STRUCTURE.md layout reference, and initial data/Room layer.
