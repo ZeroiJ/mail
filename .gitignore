@@ -1,0 +1,36 @@
+# Gradle
+.gradle/
+build/
+app/build/
+
+# Local configuration file (sdk path, etc) — best left untracked
+local.properties
+
+# Log/OS Files
+*.log
+
+# Android Studio / IntelliJ
+*.iml
+.idea/
+.cxx/
+captures/
+.externalNativeBuild/
+*.keystore
+!debug.keystore
+
+# OSX
+.DS_Store
+
+# Keystore files
+*.jks
+*.p8
+*.p12
+*.key
+*.properties
+!gradle.properties
+
+# Kotlin
+.kotlin/
+
+# OpenCode runtime/continuation state
+.omo/
