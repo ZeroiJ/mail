@@ -4,7 +4,8 @@ import android.content.Context
 import androidx.room.Room
 import com.example.mail.data.local.EmailDao
 import com.example.mail.data.local.MailDatabase
-import com.example.mail.data.repository.EmailRepository
+import com.example.mail.data.repository.EmailRepositoryImpl
+import com.example.mail.domain.repository.EmailRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -32,5 +33,5 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideEmailRepository(dao: EmailDao): EmailRepository = EmailRepository(dao)
+    fun provideEmailRepository(impl: EmailRepositoryImpl): EmailRepository = impl
 }
