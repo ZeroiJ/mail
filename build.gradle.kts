@@ -95,6 +95,14 @@ dependencies {
     // Navigation Compose
     implementation("androidx.navigation:navigation-compose:2.7.7")
 
+    // Google Sign-In — Credential Manager + Play Services Auth
+    implementation("androidx.credentials:credentials:1.3.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
+    implementation("com.google.android.gms:play-services-auth:21.3.0")
+
+    // Secure token storage
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+
     // Hilt — dependency injection
     implementation("com.google.dagger:hilt-android:2.48")
     ksp("com.google.dagger:hilt-compiler:2.48")

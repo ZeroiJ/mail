@@ -51,6 +51,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `AutoBundler`: classifies emails into bundles (RECEIPT, NEWSLETTER, LOGISTICS, SOCIAL, OTP, PERSONAL) via sender domain and subject-line regex patterns.
   - `EmailRepositoryImpl.syncRecentEmails()`: full pipeline — fetches Gmail REST → extracts HTML → strips trackers → AI OTP detection → auto-bundles → upserts Room entities, all on `Dispatchers.IO`.
   - `TriageViewModel.syncRecentEmails()` + `isSyncing` StateFlow for pull-to-refresh loading state.
+- **Google Sign-In & OAuth (`util/` + `data/remote/`):**
+  - `AuthManager`: Credential Manager bottom-sheet account picker → `GoogleAuthUtil.getToken()` with `gmail.modify` scope → `EncryptedSharedPreferences` storage.
+  - `AuthInterceptor` now reads tokens dynamically from `AuthManager` instead of a static lambda.
+  - `NetworkModule` provides `AuthManager` → `AuthInterceptor` → `OkHttpClient` chain.
+  - Added Credential Manager, Play Services Auth, and Security Crypto dependencies.
 
 ## [0.0.0] - 2026-09-09
 - Project scaffolded: AGENTS.md system prompt, STRUCTURE.md layout reference, and initial data/Room layer.

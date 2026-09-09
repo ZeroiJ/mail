@@ -1,22 +1,22 @@
 package com.example.mail.data.remote
 
+import android.util.Log
+import com.example.mail.util.AuthManager
 import okhttp3.Interceptor
 import okhttp3.Response
 
-/**
- * Attaches an OAuth2 Bearer token to every request. The token is resolved
- * lazily from [tokenProvider] on each call so a refreshed token is always
- * used without rebuilding the client.
- */
 class AuthInterceptor(
-    private val tokenProvider: () -> String?
+    private val authManager: AuthManager
 ) : Interceptor {
+
+    private val tag = "AuthInterceptor"
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val original = chain.request()
-        val token = tokenProvider()
+        val token = authManager.getStoredAccessToken()
 
         val request = if (token.isNullOrBlank()) {
+            Log.w(tag, "No access token — request sent without Authorization header")
             original
         } else {
             original.newBuilder()
