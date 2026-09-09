@@ -25,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Monochrome XML theme + font resource placeholders.
 - **Tooling:**
   - `.github/workflows/release.yml`: build debug APK and publish a GitHub Release on `v*` tags.
+- **Reusable UI components (`ui/components/`):**
+  - `FloatingIsland`: translucent pill-shaped glassmorphic action island with idle and thread-selected states (Reply/Archive/Star/Delete).
+  - `OtpCard`: dashed-border ephemeral OTP widget with dot-matrix code, StarkRed countdown, and "TAP TO COPY" pill.
+  - `ActionCard`: boxy widget for extracted dates / tracking IDs / links.
   - `CHANGELOG.md` + git workflow conventions documented in `AGENTS.md`.
 
 ### Changed
