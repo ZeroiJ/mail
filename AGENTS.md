@@ -44,6 +44,15 @@
 - **Placement:** Room/DB → `data/local/`; Gmail REST → `data/remote/`; repository impls → `data/repository/`; repository interfaces + pure models → `domain/`; composables → `ui/`; regex/tracker parsing → `util/`.
 - **Rule:** Full layout reference lives in `STRUCTURE.md`. Consult it before placing any new file.
 
+## Git Workflow (Commit & Push Discipline)
+- **Remote:** Push to `origin` / branch `main` (https://github.com/ZeroiJ/mail.git).
+- **Commit frequency:** Commit and push in small, well-scoped increments — one logical unit per commit. Do not batch unrelated work into a single commit.
+- **Message quality:** Write clean, self-explanatory commit messages that a stranger to the codebase could read and understand exactly what changed and why. Use imperative mood, an optional short scope prefix, and a body for non-obvious decisions.
+  - Format: `type(scope): short summary` (e.g. `feat(data): add EmailMessage Room entity`, `refactor(repo): route paging through EmailRepository`). Choose `feat` / `fix` / `refactor` / `chore` / `docs` / `test` as appropriate.
+  - When a commit is logically non-trivial, add a short body (blank line, then bullet points) explaining intent — not a recap of the code.
+- **Avoid:** placeholder messages ("wip", "stuff", "changes"), highly generic messages, or dumping unrelated formatting changes into feature commits.
+- Pick the right moment to leave the repo in a clean, pushable state at the end of each working turn (full commit + push), but still split the intermediate steps into clean atomic commits rather than one giant push.
+
 ## Project Workflow Rules
 - All UI must follow Nothing OS design system.
 - All email data must be cached locally in Room for offline-first access.
