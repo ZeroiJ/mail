@@ -9,10 +9,13 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.mail.ui.screens.auth.SignInScreen
+import com.example.mail.ui.screens.reader.ReaderScreen
 import com.example.mail.ui.screens.triage.TriageScreen
 import com.example.mail.ui.theme.NothingTheme
 import com.example.mail.util.AuthManager
@@ -58,13 +61,20 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.fillMaxSize()
                     ) {
                         composable("triage") {
-                            TriageScreen()
+                            TriageScreen(
+                                onEmailClick = { emailId ->
+                                    navController.navigate("reader/$emailId")
+                                }
+                            )
                         }
-                        // Future destinations:
-                        // composable("inbox") { InboxScreen() }
-                        // composable("email/{id}") { backStackEntry ->
-                        //     EmailDetailScreen(emailId = backStackEntry.arguments?.getString("id"))
-                        // }
+                        composable(
+                            route = "reader/{emailId}",
+                            arguments = listOf(
+                                navArgument("emailId") { type = NavType.StringType }
+                            )
+                        ) {
+                            ReaderScreen(onBack = { navController.popBackStack() })
+                        }
                     }
                 } else {
                     SignInScreen(

@@ -78,7 +78,8 @@ private const val SWIPE_THRESHOLD = 120f
  */
 @Composable
 fun TriageScreen(
-    viewModel: TriageViewModel = hiltViewModel()
+    viewModel: TriageViewModel = hiltViewModel(),
+    onEmailClick: (String) -> Unit = {}
 ) {
     val emailItems = viewModel.emails.collectAsLazyPagingItems()
     val otpItems = viewModel.otpEmails.collectAsLazyPagingItems()
@@ -137,6 +138,7 @@ fun TriageScreen(
             // ── Triage Deck ─────────────────────────────────────────────────
             TriageDeck(
                 emails = emailItems,
+                onEmailClick = onEmailClick,
                 onDelete = { viewModel.delete(it) },
                 onArchive = { viewModel.archive(it) },
                 onSnooze = { viewModel.snooze(it) },
@@ -242,6 +244,7 @@ private fun SyncButton(
 @Composable
 private fun TriageDeck(
     emails: androidx.paging.compose.LazyPagingItems<EmailMessage>,
+    onEmailClick: (String) -> Unit,
     onDelete: (String) -> Unit,
     onArchive: (String) -> Unit,
     onSnooze: (String) -> Unit,
@@ -258,6 +261,7 @@ private fun TriageDeck(
             val email = emails[index] ?: return@items
             SwipeableEmailCard(
                 email = email,
+                onOpen = { onEmailClick(email.id) },
                 onDelete = { onDelete(email.id) },
                 onArchive = { onArchive(email.id) },
                 onSnooze = { onSnooze(email.id) }
@@ -273,6 +277,7 @@ private fun TriageDeck(
 @Composable
 private fun SwipeableEmailCard(
     email: EmailMessage,
+    onOpen: () -> Unit,
     onDelete: () -> Unit,
     onArchive: () -> Unit,
     onSnooze: () -> Unit
@@ -310,6 +315,7 @@ private fun SwipeableEmailCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
+                .clickable(onClick = onOpen)
                 .graphicsLayer {
                     translationX = offsetX
                     translationY = offsetY
