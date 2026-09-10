@@ -96,6 +96,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Navigation: added `reader/{emailId}` route (`NavType.StringType`) to the `MainActivity` NavHost; triage deck rows are now tappable (`onEmailClick`) to open the reader, coexisting with the existing swipe gestures.
   - `EmailDao`/`EmailRepository`: replaced the suspend `getEmailById` with a `Flow<EmailMessage?>` reactive accessor so the reader re-emits when the row changes or is deleted.
 - `README.md`: project overview, tech stack, architecture, design system, build instructions, and security roadmap.
+- **Data lifecycle sweeps (background):**
+  - `EmailDao.resetSnoozedEmails()`: `UPDATE email_messages SET snoozedUntil = 0 WHERE snoozedUntil > 0 AND snoozedUntil < :now` so snoozed emails resurface in the deck once their timer lapses.
+  - `SyncWorker.doWork()` now runs `deleteExpiredOtps()` + `resetSnoozedEmails()` before `syncRecentEmails()`, expiring 24h OTPs and resurfacing expired snoozes on every poll without network.
+  - `EmailRepository` exposes `resetSnoozedEmails()` alongside the existing `deleteExpiredOtps()`.
+- **SQLCipher encrypted storage (AGENTS.md zero-trust):**
+  - `util/security/CryptoManager`: 256-bit AES master key generated once in the Android Keystore (`AndroidKeyStore`, GCM, not biometric-bound so fingerprint changes never brick the inbox), returned as a `net.sqlcipher.database.SupportFactory`; on open failure the corrupted DB + sidecar files are deleted so a fresh encrypted store is recreated instead of crash-looping.
+  - `DatabaseModule`: Room builder wired with `.openHelperFactory(CryptoManager.getOrCreateSupportFactory(context))`, so encryption applies from first creation; migrations preserved.
+  - Added `net.zetetic:android-database-sqlcipher:4.5.4`.
+- **Biometric content gate (AGENTS.md memory/screen isolation):**
+  - `ui/components/BiometricGate`: prompts via `androidx.biometric:1.2.0-alpha05` on cold launch and every `ON_RESUME` (re-locking on background return), showing a pure-black N-Dot lock screen until success; allows `DEVICE_CREDENTIAL` fallback (PIN/pattern/password) so a device without biometrics is never silently bypassed; `isPromptShowing` guard prevents double-`authenticate()` races.
+  - `MainActivity` switched from `ComponentActivity` to `AppCompatActivity` (BiometricPrompt requires a `FragmentActivity`) and wraps the post-auth NavHost in `BiometricGate` — email content composes only after biometric success.
+  - `themes.xml` parent changed to `Theme.AppCompat.NoActionBar` (AppCompatActivity requirement); added `androidx.biometric` + `androidx.appcompat` dependencies.
 
 ## [0.0.0] - 2026-09-09
 - Project scaffolded: AGENTS.md system prompt, STRUCTURE.md layout reference, and initial data/Room layer.

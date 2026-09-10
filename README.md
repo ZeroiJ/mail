@@ -119,13 +119,16 @@ See [STRUCTURE.md](STRUCTURE.md) for the full layout and placement rules.
 
 ---
 
-## Security (Planned)
+## Security
 
-Per AGENTS.md, the following are planned but not yet implemented:
+Per AGENTS.md "Security & Anti-Exploit Protocol":
 
-- **SQLCipher** database encryption with Android Keystore master keys
-- **Biometric / device credential** gate before any content renders
-- **FLAG_SECURE** to block OS background snapshots
+### Implemented
+- **SQLCipher** database encryption — 256-bit AES master key held in the Android Keystore, injected into Room via `SupportFactory` (`util/security/CryptoManager`, `DatabaseModule`).
+- **Biometric / device-credential gate** — `BiometricGate` re-locks on every resume; PIN/pattern/password fallback, never a silent bypass.
+- **FLAG_SECURE** on `MainActivity` blocks OS background snapshots and screen recording.
+
+### Planned
 - **R8 minification** + `android.util.Log` stripping in release builds
 - **WebView hardening** — JavaScript disabled, cleartext traffic banned
 
