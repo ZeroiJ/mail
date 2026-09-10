@@ -29,11 +29,14 @@ interface EmailDao {
     @Query("SELECT * FROM email_messages WHERE id = :emailId")
     suspend fun getEmailById(emailId: String): EmailMessage?
 
-    @Query("SELECT * FROM email_messages ORDER BY timestamp DESC")
-    fun getPagedEmails(): PagingSource<Int, EmailMessage>
+    @Query("SELECT * FROM email_messages WHERE (snoozedUntil = 0 OR snoozedUntil < :now) ORDER BY timestamp DESC")
+    fun getPagedEmails(now: Long): PagingSource<Int, EmailMessage>
 
     @Query("SELECT * FROM email_messages WHERE isOTP = 1 AND expiresAt > 0")
     fun getOtpEmailsPaged(): PagingSource<Int, EmailMessage>
+
+    @Query("UPDATE email_messages SET snoozedUntil = :until WHERE id = :emailId")
+    suspend fun updateSnoozedUntil(emailId: String, until: Long)
 
     @Query("DELETE FROM email_messages WHERE expiresAt > 0 AND expiresAt < :currentTime")
     suspend fun deleteExpiredOtps(currentTime: Long)

@@ -20,5 +20,6 @@ data class EmailMessage(
     val bundleType: String = BundleType.PERSONAL.label, // AutoBundler category
     val timestamp: Long,
     val isOTP: Boolean = false, // Flags for ephemeral widget rendering
-    val expiresAt: Long = 0L // Timestamp for auto-deletion
+    val expiresAt: Long = 0L, // Timestamp for auto-deletion
+    val snoozedUntil: Long = 0L // Timestamp until which the message stays hidden from the deck (0 = not snoozed)
 )

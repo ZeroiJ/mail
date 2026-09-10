@@ -9,7 +9,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [EmailMessage::class],
-    version = 2,
+    version = 3,
     exportSchema = true
 )
 abstract class MailDatabase : RoomDatabase() {
@@ -30,6 +30,16 @@ abstract class MailDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * v2 -> v3: add `snoozedUntil` (epoch millis) so up-swipe snoozes
+         * persist locally. Column defaults to 0 = "not snoozed".
+         */
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE email_messages ADD COLUMN snoozedUntil INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
         @Volatile
         private var INSTANCE: MailDatabase? = null
 
@@ -39,7 +49,7 @@ abstract class MailDatabase : RoomDatabase() {
                     context.applicationContext,
                     MailDatabase::class.java,
                     "mail.db"
-                ).addMigrations(MIGRATION_1_2).build().also { INSTANCE = it }
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build().also { INSTANCE = it }
             }
         }
     }
