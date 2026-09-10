@@ -95,6 +95,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `HtmlStripper` (`util/`): converts raw email HTML to Reader-Mode plain text — strips nested `<table>` subtrees, `<style>/<script>/<head>` blocks, HTML comments and inline `style=` declarations via `HtmlCompat`, then normalizes whitespace/paragraph breaks.
   - Navigation: added `reader/{emailId}` route (`NavType.StringType`) to the `MainActivity` NavHost; triage deck rows are now tappable (`onEmailClick`) to open the reader, coexisting with the existing swipe gestures.
   - `EmailDao`/`EmailRepository`: replaced the suspend `getEmailById` with a `Flow<EmailMessage?>` reactive accessor so the reader re-emits when the row changes or is deleted.
+- `README.md`: project overview, tech stack, architecture, design system, build instructions, and security roadmap.
 
 ## [0.0.0] - 2026-09-09
 - Project scaffolded: AGENTS.md system prompt, STRUCTURE.md layout reference, and initial data/Room layer.
