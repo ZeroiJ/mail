@@ -108,6 +108,13 @@ dependencies {
     // Secure token storage
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
+    // SQLCipher — encrypted Room database at rest
+    implementation("net.zetetic:android-database-sqlcipher:4.5.4")
+
+    // Biometric authentication gate (BiometricPrompt needs a FragmentActivity)
+    implementation("androidx.biometric:biometric:1.2.0-alpha05")
+    implementation("androidx.appcompat:appcompat:1.6.1")
+
     // Hilt — dependency injection
     implementation("com.google.dagger:hilt-android:2.48")
     ksp("com.google.dagger:hilt-compiler:2.48")
