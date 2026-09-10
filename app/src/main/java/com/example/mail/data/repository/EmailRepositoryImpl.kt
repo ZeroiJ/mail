@@ -16,6 +16,9 @@ import com.example.mail.util.BundleType
 import com.example.mail.util.GeminiProcessor
 import com.example.mail.util.TrackerStripper
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
@@ -30,6 +33,11 @@ class EmailRepositoryImpl @Inject constructor(
 ) : EmailRepository {
 
     private val tag = "EmailRepoImpl"
+
+    private companion object {
+        const val QUERY_RECENT_DAY = "newer_than:1d"
+        const val SYNC_BATCH_SIZE = 20
+    }
 
     override fun getTriageQueueFlow(): Flow<PagingData<EmailMessage>> {
         val startOfDay = System.currentTimeMillis() - TimeUnit.HOURS.toMillis(24)
@@ -69,37 +77,35 @@ class EmailRepositoryImpl @Inject constructor(
     override suspend fun deleteExpiredOtps() = emailDao.deleteExpiredOtps(System.currentTimeMillis())
 
     override suspend fun syncRecentEmails(): Int = withContext(Dispatchers.IO) {
-        try {
-            val query = "newer_than:1d"
-            val listResponse = gmailApi.listMessages(q = query, maxResults = 50)
-            val summaries = listResponse.messages ?: return@withContext 0
-
-            if (summaries.isEmpty()) return@withContext 0
-
-            val newEmails = mutableListOf<EmailMessage>()
-
-            for (summary in summaries) {
-                try {
-                    val detail = gmailApi.getMessage(id = summary.id, format = "full")
-                    val entity = mapToEntity(detail)
-                    if (entity != null) {
-                        newEmails.add(entity)
-                    }
-                } catch (e: Exception) {
-                    Log.e(tag, "Failed to fetch message ${summary.id}: ${e.message}")
-                }
-            }
-
-            if (newEmails.isNotEmpty()) {
-                emailDao.insertEmails(newEmails)
-            }
-
-            Log.i(tag, "Sync complete: ${newEmails.size} messages upserted")
-            newEmails.size
-        } catch (e: Exception) {
-            Log.e(tag, "Sync failed: ${e.message}")
-            0
+        val listResult = runCatching {
+            gmailApi.listMessages(q = QUERY_RECENT_DAY, maxResults = SYNC_BATCH_SIZE)
         }
+        val summaries = listResult.getOrElse { e ->
+            Log.e(tag, "Sync failed at list stage: ${e.message}")
+            return@withContext 0
+        }.messages.orEmpty()
+
+        if (summaries.isEmpty()) return@withContext 0
+
+        val entities = coroutineScope {
+            summaries.map { summary ->
+                async {
+                    runCatching {
+                        mapToEntity(gmailApi.getMessage(id = summary.id, format = "full"))
+                    }.getOrElse { e ->
+                        Log.e(tag, "Failed to fetch message ${summary.id}: ${e.message}")
+                        null
+                    }
+                }
+            }.awaitAll().filterNotNull()
+        }
+
+        if (entities.isNotEmpty()) {
+            emailDao.insertAll(entities)
+        }
+
+        Log.i(tag, "Sync complete: ${entities.size} messages upserted")
+        entities.size
     }
 
     private suspend fun mapToEntity(detail: MessageDetailDto): EmailMessage? {
@@ -115,6 +121,7 @@ class EmailRepositoryImpl @Inject constructor(
         val cleanHtml = TrackerStripper.strip(rawHtml)
         val plainText = htmlToPlainText(cleanHtml)
 
+        val summary = gemini.generateThreadSummary(plainText)
         val otpCode = gemini.extractOtp(plainText)
         val isOtp = otpCode.isNotEmpty()
         val otpExpiry = if (isOtp) {
@@ -136,6 +143,8 @@ class EmailRepositoryImpl @Inject constructor(
             snippet = snippet,
             bodyHtml = cleanHtml,
             bodyMarkdown = plainText,
+            summary = summary,
+            bundleType = bundleType.label,
             timestamp = timestamp,
             isOTP = finalIsOtp,
             expiresAt = if (finalIsOtp) otpExpiry else 0L

@@ -8,20 +8,23 @@ import retrofit2.http.Query
 
 /**
  * Retrofit service for the Gmail REST API.
- * All endpoints are scoped to the authenticated user ("me").
+ * All endpoints accept a [userId]; the special value "me" (default) resolves
+ * to the authenticated user, so call sites can stay generic.
  */
 interface GmailApiService {
 
     /**
      * List message summaries matching an optional query.
-     * Backed by `GET /gmail/v1/users/me/messages`.
+     * Backed by `GET /gmail/v1/users/{userId}/messages`.
      *
-     * @param q       Gmail search query (e.g. "in:inbox newer_than:1d")
+     * @param userId    Gmail user id to scope the query to ("me" by default)
+     * @param q         Gmail search query (e.g. "in:inbox newer_than:1d")
      * @param maxResults max number of results to return
      * @param pageToken  token for the next page of results
      */
-    @GET("gmail/v1/users/me/messages")
+    @GET("gmail/v1/users/{userId}/messages")
     suspend fun listMessages(
+        @Path("userId") userId: String = "me",
         @Query("q") q: String? = null,
         @Query("maxResults") maxResults: Int = 50,
         @Query("pageToken") pageToken: String? = null
@@ -29,12 +32,15 @@ interface GmailApiService {
 
     /**
      * Fetch a single message by its Gmail Message ID.
-     * Backed by `GET /gmail/v1/users/me/messages/{id}`.
+     * Backed by `GET /gmail/v1/users/{userId}/messages/{id}`.
      *
+     * @param userId Gmail user id to scope the query to ("me" by default)
+     * @param id     Gmail Message ID
      * @param format e.g. "full" to include headers and body parts.
      */
-    @GET("gmail/v1/users/me/messages/{id}")
+    @GET("gmail/v1/users/{userId}/messages/{id}")
     suspend fun getMessage(
+        @Path("userId") userId: String = "me",
         @Path("id") id: String,
         @Query("format") format: String = "full"
     ): MessageDetailDto
