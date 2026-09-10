@@ -89,6 +89,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `EmailRepository` replaced the local-only `deleteEmail(email)` with server-synced `archiveEmail(id)` / `deleteEmail(id)` / `snoozeEmail(id, untilTimestamp)`; each optimistically mutates Room **before** the network call and wraps it in `runCatching` on `Dispatchers.IO`, so the deck reacts instantly and failures degrade silently to offline mode.
   - Archive → remove `INBOX` label; Delete → add `TRASH` + remove `INBOX`; Snooze → remove `INBOX` on the server and persist `snoozedUntil` locally (Room migration v2→v3) so the row stays hidden from the deck until the timestamp passes.
   - Sync query narrowed to `in:inbox newer_than:1d` so archived/snoozed/trashed messages are not resurrected locally on the next poll.
+- **Reader / detail view (Room-backed):**
+  - `ReaderViewModel`: `@HiltViewModel` resolving the navigation argument `emailId` from `SavedStateHandle` and exposing the message as a reactive `StateFlow<EmailMessage?>` bound to Room — zero network latency on open.
+  - `ReaderScreen`: Nothing-styled detail view (OLED black, N-Dot header with back affordance + sender/subject, dark gray divider) rendering the plain-text body; pins an `OtpCard` with a live countdown + copy when a message is flagged OTP, and an `ActionCard` per extracted DATE/TRACKING segment; shows a missing-state when the row no longer matches.
+  - `HtmlStripper` (`util/`): converts raw email HTML to Reader-Mode plain text — strips nested `<table>` subtrees, `<style>/<script>/<head>` blocks, HTML comments and inline `style=` declarations via `HtmlCompat`, then normalizes whitespace/paragraph breaks.
+  - Navigation: added `reader/{emailId}` route (`NavType.StringType`) to the `MainActivity` NavHost; triage deck rows are now tappable (`onEmailClick`) to open the reader, coexisting with the existing swipe gestures.
+  - `EmailDao`/`EmailRepository`: replaced the suspend `getEmailById` with a `Flow<EmailMessage?>` reactive accessor so the reader re-emits when the row changes or is deleted.
 
 ## [0.0.0] - 2026-09-09
 - Project scaffolded: AGENTS.md system prompt, STRUCTURE.md layout reference, and initial data/Room layer.
