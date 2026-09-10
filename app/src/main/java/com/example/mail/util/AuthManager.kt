@@ -4,11 +4,9 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
 import androidx.credentials.CredentialManager
-import androidx.credentials.CredentialOption
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
 import com.google.android.gms.auth.GoogleAuthUtil
-import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.Scope
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
@@ -54,7 +52,7 @@ class AuthManager @Inject constructor(
         val expiry = encryptedPrefs.getLong(KEY_TOKEN_EXPIRY, 0)
 
         if (cached != null && accountName != null && expiry > System.currentTimeMillis()) {
-            _authState.value = AuthState.Authenticated(accountName, cached)
+            _authState.value = AuthState.Authenticated(accountName)
         } else if (cached != null) {
             _authState.value = AuthState.TokenExpired(accountName.orEmpty())
         } else {
@@ -92,7 +90,7 @@ class AuthManager @Inject constructor(
 
                 val accessToken = fetchAccessToken(accountName)
                 if (accessToken != null) {
-                    _authState.value = AuthState.Authenticated(accountName, accessToken)
+                    _authState.value = AuthState.Authenticated(accountName)
                     Result.success(accountName)
                 } else {
                     Result.failure(Exception("Failed to obtain access token"))
@@ -115,7 +113,6 @@ class AuthManager @Inject constructor(
 
     private suspend fun fetchAccessToken(accountName: String): String? = withContext(Dispatchers.IO) {
         try {
-            GoogleAuthUtil.clearToken(context, "dummy") // Clear stale tokens
             val token = GoogleAuthUtil.getToken(
                 context,
                 accountName,
@@ -126,7 +123,7 @@ class AuthManager @Inject constructor(
             Log.i(tag, "Access token obtained for $accountName")
             token
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to fetch access token: ${e.message}")
+            Log.e(tag, "Failed to fetch access token: ${e.message}")
             null
         }
     }
@@ -191,6 +188,6 @@ class AuthManager @Inject constructor(
 sealed class AuthState {
     data object Unknown : AuthState()
     data object SignedOut : AuthState()
-    data class Authenticated(val accountName: String, val accessToken: String) : AuthState()
+    data class Authenticated(val accountName: String) : AuthState()
     data class TokenExpired(val accountName: String) : AuthState()
 }
