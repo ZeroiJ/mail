@@ -73,6 +73,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `EmailRepositoryImpl.syncRecentEmails()` rewritten: runs strictly on `Dispatchers.IO`, fetches the latest 20 message IDs, fetches full payloads **concurrently** (`async`/`awaitAll`), strips trackers, generates on-device summaries + extracts OTPs via `GeminiProcessor`, classifies bundles via `AutoBundler`, then upserts via `insertAll()`.
   - Network calls wrapped in `runCatching`; per-message failures are logged and skipped without aborting the batch; the `TriageViewModel` `finally` block always clears the syncing indicator.
   - `EmailMessage` gained `summary` and `bundle_type` columns (Room migration v1→v2, exported schema); `insertEmails` renamed to `insertAll`.
+- **Native background sync (WorkManager, replacing Cloud Pub/Sub):**
+  - `worker/SyncWorker`: `@HiltWorker` `CoroutineWorker` pulling `emailRepository.syncRecentEmails()` inside a `runCatching` block — `Result.success()` on completion, `Result.retry()` on network failure, `CancellationException` rethrown.
+  - `MailApp` implements `Configuration.Provider`, injects `HiltWorkerFactory`, and enqueues a unique `PeriodicWorkRequest` for `SyncWorker` every 15 minutes with a `NetworkType.CONNECTED` constraint (`ExistingPeriodicWorkPolicy.KEEP`), so polling starts quietly on first launch.
+  - Default `WorkManagerInitializer` removed from the manifest so workers are built exclusively through Hilt.
+  - Added `androidx.work:work-runtime-ktx` + `androidx.hilt:hilt-work` + `androidx.hilt:hilt-compiler` dependencies.
 
 ## [0.0.0] - 2026-09-09
 - Project scaffolded: AGENTS.md system prompt, STRUCTURE.md layout reference, and initial data/Room layer.
