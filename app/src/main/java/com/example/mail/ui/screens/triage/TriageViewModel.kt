@@ -36,7 +36,7 @@ class TriageViewModel @Inject constructor(
     private val _lastSyncCount = MutableStateFlow(0)
     val lastSyncCount: StateFlow<Int> = _lastSyncCount.asStateFlow()
 
-    fun syncRecentEmails() {
+    fun sync() {
         if (_isSyncing.value) return
         viewModelScope.launch {
             _isSyncing.value = true
