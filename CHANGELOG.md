@@ -78,6 +78,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `MailApp` implements `Configuration.Provider`, injects `HiltWorkerFactory`, and enqueues a unique `PeriodicWorkRequest` for `SyncWorker` every 15 minutes with a `NetworkType.CONNECTED` constraint (`ExistingPeriodicWorkPolicy.KEEP`), so polling starts quietly on first launch.
   - Default `WorkManagerInitializer` removed from the manifest so workers are built exclusively through Hilt.
   - Added `androidx.work:work-runtime-ktx` + `androidx.hilt:hilt-work` + `androidx.hilt:hilt-compiler` dependencies.
+- **Paging 3 triage interface (Room → Compose):**
+  - `EmailDao.getPagedEmails()`: `SELECT * FROM email_messages ORDER BY timestamp DESC` as a `PagingSource<Int, EmailMessage>`.
+  - `EmailRepository.getPagedEmails()`: pages through the inbox with `PagingConfig(pageSize = 20)`; exposed via `TriageViewModel.emails` with `cachedIn(viewModelScope)`.
+  - `TriageScreen` collects the deck with `collectAsLazyPagingItems()` into a `LazyColumn`; swipe gestures mapped: left→delete (StarkRed), right→archive (green), up→snooze (blue) — custom gesture modifiers since `SwipeToDismissBox` cannot express vertical swipes.
+  - Rows render the Nothing OS compact aesthetic: N-Dot sender + subject, and the on-device AI `summary` (Geist, fallback to snippet) — no main-thread DB access (all Room ops suspend/off-main via paging).
+  - Removed the bounded 24h triage-queue flow (`getTriageQueuePaged`/`getTriageQueueFlow`) — superseded by the full paged deck, which satisfies AGENTS.md's "finite daily inbox **or** card-deck swipe view".
 
 ## [0.0.0] - 2026-09-09
 - Project scaffolded: AGENTS.md system prompt, STRUCTURE.md layout reference, and initial data/Room layer.
