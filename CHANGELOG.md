@@ -59,6 +59,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Security & Anti-Exploit Protocol (docs):**
   - `AGENTS.md`: new `## Security & Anti-Exploit Protocol` section — SQLCipher zero-trust storage with Keystore master keys, `FLAG_SECURE` + biometric gating, `android:exported="false"` component isolation, WebView/payload sandboxing with cleartext ban, R8 release hardening with Log stripping.
   - `STRUCTURE.md`: added `util/security/CryptoManager.kt`, `ui/components/BiometricGate.kt`, SQLCipher `SupportFactory` wiring in `di/DatabaseModule.kt`, and a 3-phase Implementation Strategy (Storage → UI Hardening → Network & Build).
+- **Gradle build infrastructure:**
+  - `settings.gradle.kts`, root `build.gradle.kts`, and `app/build.gradle.kts` split into a proper multi-module layout with AGP 8.5.0, Kotlin 2.0.20, Compose compiler plugin, Hilt 2.48, KSP with Room schema export.
+  - `gradle.properties`, `local.properties`, `app/proguard-rules.pro`, adaptive launcher icons; `res/font/README.md` moved to `FONTS.md` so the resource merger accepts the font directory.
+- **Authentication gate:**
+  - `MainActivity` now sets `FLAG_SECURE` before `setContent` and gates the `NavHost` behind `AuthManager.authState` — unauthenticated users see `SignInScreen`.
+  - `SignInScreen`: Nothing OS-styled sign-in (N-Dot header, monochrome palette, StarkRed error state).
+  - `AuthManager`: real `WEB_CLIENT_ID`, Google ID tokens via Credential Manager with `googleid` artifact, failure diagnostics, and token-free `AuthState` (Bearer tokens never reach the UI layer).
+- **Triage manual sync:**
+  - `TriageViewModel.syncRecentEmails()` + `isSyncing` exposed to the UI; `TriageScreen` gained a manual sync trigger pill with spinner.
 
 ## [0.0.0] - 2026-09-09
 - Project scaffolded: AGENTS.md system prompt, STRUCTURE.md layout reference, and initial data/Room layer.
