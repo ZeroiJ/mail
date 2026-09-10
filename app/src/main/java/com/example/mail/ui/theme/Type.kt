@@ -27,9 +27,9 @@ val GeistBold = FontFamily(
 )
 
 val Geist = FontFamily(
-    GeistRegular,
-    GeistMedium,
-    GeistBold
+    Font(R.font.geist_regular, weight = FontWeight.Normal),
+    Font(R.font.geist_medium, weight = FontWeight.Medium),
+    Font(R.font.geist_bold, weight = FontWeight.Bold)
 )
 
 val NDot = FontFamily(
