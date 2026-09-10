@@ -6,6 +6,7 @@ import com.example.mail.data.local.EmailDao
 import com.example.mail.data.local.MailDatabase
 import com.example.mail.data.repository.EmailRepositoryImpl
 import com.example.mail.domain.repository.EmailRepository
+import com.example.mail.util.security.CryptoManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -20,11 +21,16 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideMailDatabase(@ApplicationContext context: Context): MailDatabase {
+        // SQLCipher SupportFactory wraps the Keystore-backed AES-256 master key,
+        // so encryption applies from first creation (per AGENTS.md).
         return Room.databaseBuilder(
             context,
             MailDatabase::class.java,
             "mail.db"
-        ).addMigrations(MailDatabase.MIGRATION_1_2, MailDatabase.MIGRATION_2_3).build()
+        )
+            .openHelperFactory(CryptoManager.getOrCreateSupportFactory(context))
+            .addMigrations(MailDatabase.MIGRATION_1_2, MailDatabase.MIGRATION_2_3)
+            .build()
     }
 
     @Provides
