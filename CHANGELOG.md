@@ -84,6 +84,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `TriageScreen` collects the deck with `collectAsLazyPagingItems()` into a `LazyColumn`; swipe gestures mapped: left→delete (StarkRed), right→archive (green), up→snooze (blue) — custom gesture modifiers since `SwipeToDismissBox` cannot express vertical swipes.
   - Rows render the Nothing OS compact aesthetic: N-Dot sender + subject, and the on-device AI `summary` (Geist, fallback to snippet) — no main-thread DB access (all Room ops suspend/off-main via paging).
   - Removed the bounded 24h triage-queue flow (`getTriageQueuePaged`/`getTriageQueueFlow`) — superseded by the full paged deck, which satisfies AGENTS.md's "finite daily inbox **or** card-deck swipe view".
+- **Two-way server sync (local gestures → Gmail):**
+  - `GmailApiService.modifyMessage()`: `POST /gmail/v1/users/{userId}/messages/{id}/modify` with a new `ModifyMessageRequest` DTO (`addLabelIds` / `removeLabelIds`), enabling label mutations from the client.
+  - `EmailRepository` replaced the local-only `deleteEmail(email)` with server-synced `archiveEmail(id)` / `deleteEmail(id)` / `snoozeEmail(id, untilTimestamp)`; each optimistically mutates Room **before** the network call and wraps it in `runCatching` on `Dispatchers.IO`, so the deck reacts instantly and failures degrade silently to offline mode.
+  - Archive → remove `INBOX` label; Delete → add `TRASH` + remove `INBOX`; Snooze → remove `INBOX` on the server and persist `snoozedUntil` locally (Room migration v2→v3) so the row stays hidden from the deck until the timestamp passes.
+  - Sync query narrowed to `in:inbox newer_than:1d` so archived/snoozed/trashed messages are not resurrected locally on the next poll.
 
 ## [0.0.0] - 2026-09-09
 - Project scaffolded: AGENTS.md system prompt, STRUCTURE.md layout reference, and initial data/Room layer.
