@@ -15,7 +15,7 @@ interface EmailDao {
     suspend fun insertEmail(email: EmailMessage)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertEmails(emails: List<EmailMessage>)
+    suspend fun insertAll(emails: List<EmailMessage>)
 
     @Update
     suspend fun updateEmail(email: EmailMessage)

@@ -24,7 +24,7 @@ object DatabaseModule {
             context,
             MailDatabase::class.java,
             "mail.db"
-        ).build()
+        ).addMigrations(MailDatabase.MIGRATION_1_2).build()
     }
 
     @Provides
