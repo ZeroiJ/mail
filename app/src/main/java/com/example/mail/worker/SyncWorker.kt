@@ -23,6 +23,8 @@ class SyncWorker @AssistedInject constructor(
 ) : CoroutineWorker(appContext, params) {
 
     override suspend fun doWork(): Result = runCatching {
+        emailRepository.deleteExpiredOtps()
+        emailRepository.resetSnoozedEmails()
         emailRepository.syncRecentEmails()
     }.fold(
         onSuccess = {

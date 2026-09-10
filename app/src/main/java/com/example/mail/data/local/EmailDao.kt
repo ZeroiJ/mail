@@ -42,6 +42,9 @@ interface EmailDao {
     @Query("DELETE FROM email_messages WHERE expiresAt > 0 AND expiresAt < :currentTime")
     suspend fun deleteExpiredOtps(currentTime: Long)
 
+    @Query("UPDATE email_messages SET snoozedUntil = 0 WHERE snoozedUntil > 0 AND snoozedUntil < :now")
+    suspend fun resetSnoozedEmails(now: Long)
+
     @Query("SELECT COUNT(*) FROM email_messages")
     suspend fun getEmailCount(): Int
 

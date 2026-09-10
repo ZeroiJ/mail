@@ -111,6 +111,8 @@ class EmailRepositoryImpl @Inject constructor(
 
     override suspend fun deleteExpiredOtps() = emailDao.deleteExpiredOtps(System.currentTimeMillis())
 
+    override suspend fun resetSnoozedEmails() = emailDao.resetSnoozedEmails(System.currentTimeMillis())
+
     override suspend fun syncRecentEmails(): Int = withContext(Dispatchers.IO) {
         val listResult = runCatching {
             gmailApi.listMessages(q = QUERY_RECENT_DAY, maxResults = SYNC_BATCH_SIZE)
