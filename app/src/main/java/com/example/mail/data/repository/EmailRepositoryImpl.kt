@@ -10,6 +10,7 @@ import com.example.mail.data.local.EmailMessage
 import com.example.mail.data.remote.GmailApiService
 import com.example.mail.data.remote.dto.MessageDetailDto
 import com.example.mail.data.remote.dto.MessagePartDto
+import com.example.mail.data.remote.dto.ModifyMessageRequest
 import com.example.mail.domain.repository.EmailRepository
 import com.example.mail.util.AutoBundler
 import com.example.mail.util.BundleType
@@ -35,7 +36,9 @@ class EmailRepositoryImpl @Inject constructor(
     private val tag = "EmailRepoImpl"
 
     private companion object {
-        const val QUERY_RECENT_DAY = "newer_than:1d"
+        // Restrict sync to the inbox so archived/snoozed/trashed messages
+        // are not resurrected locally on every poll.
+        const val QUERY_RECENT_DAY = "in:inbox newer_than:1d"
         const val SYNC_BATCH_SIZE = 20
     }
 
@@ -45,7 +48,7 @@ class EmailRepositoryImpl @Inject constructor(
                 pageSize = 20,
                 enablePlaceholders = false
             ),
-            pagingSourceFactory = { emailDao.getPagedEmails() }
+            pagingSourceFactory = { emailDao.getPagedEmails(System.currentTimeMillis()) }
         ).flow
     }
 
@@ -61,7 +64,50 @@ class EmailRepositoryImpl @Inject constructor(
 
     override suspend fun getEmailById(id: String): EmailMessage? = emailDao.getEmailById(id)
 
-    override suspend fun deleteEmail(email: EmailMessage) = emailDao.deleteEmail(email)
+    override suspend fun archiveEmail(id: String) {
+        withContext(Dispatchers.IO) {
+            emailDao.deleteEmailById(id)
+            runCatching {
+                gmailApi.modifyMessage(
+                    id = id,
+                    request = ModifyMessageRequest(removeLabelIds = listOf("INBOX"))
+                )
+            }.onFailure { e ->
+                Log.e(tag, "Archive failed for $id: ${e.message}")
+            }
+        }
+    }
+
+    override suspend fun deleteEmail(id: String) {
+        withContext(Dispatchers.IO) {
+            emailDao.deleteEmailById(id)
+            runCatching {
+                gmailApi.modifyMessage(
+                    id = id,
+                    request = ModifyMessageRequest(
+                        addLabelIds = listOf("TRASH"),
+                        removeLabelIds = listOf("INBOX")
+                    )
+                )
+            }.onFailure { e ->
+                Log.e(tag, "Delete failed for $id: ${e.message}")
+            }
+        }
+    }
+
+    override suspend fun snoozeEmail(id: String, untilTimestamp: Long) {
+        withContext(Dispatchers.IO) {
+            emailDao.updateSnoozedUntil(id, untilTimestamp)
+            runCatching {
+                gmailApi.modifyMessage(
+                    id = id,
+                    request = ModifyMessageRequest(removeLabelIds = listOf("INBOX"))
+                )
+            }.onFailure { e ->
+                Log.e(tag, "Snooze failed for $id: ${e.message}")
+            }
+        }
+    }
 
     override suspend fun deleteExpiredOtps() = emailDao.deleteExpiredOtps(System.currentTimeMillis())
 

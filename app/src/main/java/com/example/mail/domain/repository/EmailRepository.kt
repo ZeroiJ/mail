@@ -20,7 +20,23 @@ interface EmailRepository {
 
     suspend fun getEmailById(id: String): EmailMessage?
 
-    suspend fun deleteEmail(email: EmailMessage)
+    /**
+     * Archive a message: remove it from the local deck optimistically, then
+     * remove the INBOX label on the server.
+     */
+    suspend fun archiveEmail(id: String)
+
+    /**
+     * Delete a message: remove it from the local deck optimistically, then
+     * move it to TRASH on the server.
+     */
+    suspend fun deleteEmail(id: String)
+
+    /**
+     * Snooze a message: remove the INBOX label on the server and hide it from
+     * the deck locally until [untilTimestamp].
+     */
+    suspend fun snoozeEmail(id: String, untilTimestamp: Long)
 
     suspend fun deleteExpiredOtps()
 
