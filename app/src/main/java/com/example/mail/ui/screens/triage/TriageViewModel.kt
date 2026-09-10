@@ -11,9 +11,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -50,22 +47,16 @@ class TriageViewModel @Inject constructor(
     }
 
     fun delete(id: String) {
-        viewModelScope.launch {
-            repository.getEmailById(id)?.let { repository.deleteEmail(it) }
-        }
+        viewModelScope.launch { repository.deleteEmail(id) }
     }
 
     fun archive(id: String) {
-        viewModelScope.launch {
-            repository.getEmailById(id)?.let {
-                repository.deleteEmail(it)
-            }
-        }
+        viewModelScope.launch { repository.archiveEmail(id) }
     }
 
     fun snooze(id: String) {
         viewModelScope.launch {
-            // TODO: re-insert with future timestamp.
+            repository.snoozeEmail(id, System.currentTimeMillis() + DEFAULT_SNOOZE_MS)
         }
     }
 
@@ -73,5 +64,9 @@ class TriageViewModel @Inject constructor(
         viewModelScope.launch {
             repository.deleteExpiredOtps()
         }
+    }
+
+    private companion object {
+        const val DEFAULT_SNOOZE_MS = 2L * 60 * 60 * 1000
     }
 }
