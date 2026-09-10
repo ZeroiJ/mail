@@ -2,7 +2,7 @@ package com.example.mail.util
 
 import android.content.Context
 import android.util.Log
-import com.google.ai.edge.litert.Interpreter
+import org.tensorflow.lite.Interpreter
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.FileInputStream
 import java.nio.ByteBuffer

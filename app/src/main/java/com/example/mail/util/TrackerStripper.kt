@@ -34,7 +34,7 @@ object TrackerStripper {
     /** Matches known tracker domains in image src URLs. */
     private val trackerDomainPattern = Regex(
         """(pixel\.[a-z]+|track[a-z]*\.[a-z]+|\.track\.|pixels[a-z]*\.|sendspark|"""
-            + """litmus\.com|mailchimp\.com|sendgrid\.net|hubspot\.com|`
+            + """litmus\.com|mailchimp\.com|sendgrid\.net|hubspot\.com|"""
             + """intercom\.io|customer\.io|postmarkapp\.com)""",
         RegexOption.IGNORE_CASE
     )
