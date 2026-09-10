@@ -50,6 +50,7 @@ import com.example.mail.ui.components.FloatingIsland
 import com.example.mail.ui.components.FloatingIslandState
 import com.example.mail.ui.components.OtpCard
 import com.example.mail.ui.theme.BorderGray
+import com.example.mail.ui.theme.Geist
 import com.example.mail.ui.theme.MutedGray
 import com.example.mail.ui.theme.NDot
 import com.example.mail.ui.theme.NothingTheme
@@ -79,7 +80,7 @@ private const val SWIPE_THRESHOLD = 120f
 fun TriageScreen(
     viewModel: TriageViewModel = hiltViewModel()
 ) {
-    val triageItems = viewModel.triageEmails.collectAsLazyPagingItems()
+    val emailItems = viewModel.emails.collectAsLazyPagingItems()
     val otpItems = viewModel.otpEmails.collectAsLazyPagingItems()
     val isSyncing by viewModel.isSyncing.collectAsState()
 
@@ -89,7 +90,7 @@ fun TriageScreen(
     }
 
     val clipboardManager = LocalClipboardManager.current
-    val islandState = if (triageItems.itemCount > 0)
+    val islandState = if (emailItems.itemCount > 0)
         FloatingIslandState.ThreadSelected else FloatingIslandState.Idle
 
     Box(
@@ -104,7 +105,7 @@ fun TriageScreen(
         ) {
             // ── Header ──────────────────────────────────────────────────────
             TriageHeader(
-                triageCount = triageItems.itemCount,
+                triageCount = emailItems.itemCount,
                 isSyncing = isSyncing,
                 onSync = { viewModel.sync() }
             )
@@ -135,7 +136,7 @@ fun TriageScreen(
 
             // ── Triage Deck ─────────────────────────────────────────────────
             TriageDeck(
-                emails = triageItems,
+                emails = emailItems,
                 onDelete = { viewModel.delete(it) },
                 onArchive = { viewModel.archive(it) },
                 onSnooze = { viewModel.snooze(it) },
@@ -389,7 +390,8 @@ private fun SwipeableEmailCard(
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = email.snippet,
+                        text = email.summary.ifBlank { email.snippet },
+                        fontFamily = Geist,
                         fontSize = 13.sp,
                         color = MutedGray,
                         maxLines = 2

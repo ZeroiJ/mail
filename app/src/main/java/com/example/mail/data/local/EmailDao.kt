@@ -30,10 +30,7 @@ interface EmailDao {
     suspend fun getEmailById(emailId: String): EmailMessage?
 
     @Query("SELECT * FROM email_messages ORDER BY timestamp DESC")
-    fun getAllEmailsPaged(): PagingSource<Int, EmailMessage>
-
-    @Query("SELECT * FROM email_messages WHERE timestamp >= :startTime ORDER BY timestamp DESC")
-    fun getTriageQueuePaged(startTime: Long): PagingSource<Int, EmailMessage>
+    fun getPagedEmails(): PagingSource<Int, EmailMessage>
 
     @Query("SELECT * FROM email_messages WHERE isOTP = 1 AND expiresAt > 0")
     fun getOtpEmailsPaged(): PagingSource<Int, EmailMessage>

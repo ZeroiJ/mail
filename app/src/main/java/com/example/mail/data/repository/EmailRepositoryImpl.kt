@@ -39,24 +39,13 @@ class EmailRepositoryImpl @Inject constructor(
         const val SYNC_BATCH_SIZE = 20
     }
 
-    override fun getTriageQueueFlow(): Flow<PagingData<EmailMessage>> {
-        val startOfDay = System.currentTimeMillis() - TimeUnit.HOURS.toMillis(24)
+    override fun getPagedEmails(): Flow<PagingData<EmailMessage>> {
         return Pager(
             config = PagingConfig(
                 pageSize = 20,
                 enablePlaceholders = false
             ),
-            pagingSourceFactory = { emailDao.getTriageQueuePaged(startOfDay) }
-        ).flow
-    }
-
-    override fun getAllEmailsFlow(): Flow<PagingData<EmailMessage>> {
-        return Pager(
-            config = PagingConfig(
-                pageSize = 20,
-                enablePlaceholders = false
-            ),
-            pagingSourceFactory = { emailDao.getAllEmailsPaged() }
+            pagingSourceFactory = { emailDao.getPagedEmails() }
         ).flow
     }
 

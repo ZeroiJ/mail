@@ -11,12 +11,10 @@ import kotlinx.coroutines.flow.Flow
 interface EmailRepository {
 
     /**
-     * Finite daily triage queue as a paged flow. Bounded to recent messages so
-     * the card-deck view always has a finite deck (Inbox Zero < 2 min).
+     * Full inbox as a paged flow ordered by recency. Powers the triage deck;
+     * each page holds [pageSize] messages via Paging 3.
      */
-    fun getTriageQueueFlow(): Flow<PagingData<EmailMessage>>
-
-    fun getAllEmailsFlow(): Flow<PagingData<EmailMessage>>
+    fun getPagedEmails(): Flow<PagingData<EmailMessage>>
 
     fun getOtpEmailsFlow(): Flow<PagingData<EmailMessage>>
 

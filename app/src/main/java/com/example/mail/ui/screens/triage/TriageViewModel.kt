@@ -22,8 +22,8 @@ class TriageViewModel @Inject constructor(
     private val repository: EmailRepository
 ) : ViewModel() {
 
-    val triageEmails: Flow<PagingData<EmailMessage>> =
-        repository.getTriageQueueFlow()
+    val emails: Flow<PagingData<EmailMessage>> =
+        repository.getPagedEmails()
             .cachedIn(viewModelScope)
 
     val otpEmails: Flow<PagingData<EmailMessage>> =
