@@ -53,3 +53,10 @@ data class MessagePartBodyDto(
     val size: Int = 0,
     val data: String? = null
 )
+
+/** Request body of `POST /gmail/v1/users/me/messages/{id}/modify`. */
+@Serializable
+data class ModifyMessageRequest(
+    val addLabelIds: List<String> = emptyList(),
+    val removeLabelIds: List<String> = emptyList()
+)

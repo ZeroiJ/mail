@@ -2,7 +2,10 @@ package com.example.mail.data.remote
 
 import com.example.mail.data.remote.dto.MessageDetailDto
 import com.example.mail.data.remote.dto.MessageListResponse
+import com.example.mail.data.remote.dto.ModifyMessageRequest
+import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -43,5 +46,20 @@ interface GmailApiService {
         @Path("userId") userId: String = "me",
         @Path("id") id: String,
         @Query("format") format: String = "full"
+    ): MessageDetailDto
+
+    /**
+     * Modify a message's labels. Backed by
+     * `POST /gmail/v1/users/{userId}/messages/{id}/modify`.
+     *
+     * @param userId Gmail user id to scope the query to ("me" by default)
+     * @param id     Gmail Message ID
+     * @param request labels to add/remove (e.g. TRASH, INBOX)
+     */
+    @POST("gmail/v1/users/{userId}/messages/{id}/modify")
+    suspend fun modifyMessage(
+        @Path("userId") userId: String = "me",
+        @Path("id") id: String,
+        @Body request: ModifyMessageRequest
     ): MessageDetailDto
 }
