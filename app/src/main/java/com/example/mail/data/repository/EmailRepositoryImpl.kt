@@ -62,7 +62,7 @@ class EmailRepositoryImpl @Inject constructor(
         ).flow
     }
 
-    override suspend fun getEmailById(id: String): EmailMessage? = emailDao.getEmailById(id)
+    override fun getEmailById(id: String): Flow<EmailMessage?> = emailDao.getEmailById(id)
 
     override suspend fun archiveEmail(id: String) {
         withContext(Dispatchers.IO) {

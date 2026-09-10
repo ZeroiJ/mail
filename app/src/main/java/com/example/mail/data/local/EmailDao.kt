@@ -7,6 +7,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface EmailDao {
@@ -27,7 +28,7 @@ interface EmailDao {
     suspend fun deleteEmailById(emailId: String)
 
     @Query("SELECT * FROM email_messages WHERE id = :emailId")
-    suspend fun getEmailById(emailId: String): EmailMessage?
+    fun getEmailById(emailId: String): Flow<EmailMessage?>
 
     @Query("SELECT * FROM email_messages WHERE (snoozedUntil = 0 OR snoozedUntil < :now) ORDER BY timestamp DESC")
     fun getPagedEmails(now: Long): PagingSource<Int, EmailMessage>

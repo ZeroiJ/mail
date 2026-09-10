@@ -18,7 +18,11 @@ interface EmailRepository {
 
     fun getOtpEmailsFlow(): Flow<PagingData<EmailMessage>>
 
-    suspend fun getEmailById(id: String): EmailMessage?
+    /**
+     * Reactive single-email stream for the Reader/Detail view. Emits null
+     * while no row matches (e.g. the message was deleted meanwhile).
+     */
+    fun getEmailById(id: String): Flow<EmailMessage?>
 
     /**
      * Archive a message: remove it from the local deck optimistically, then
