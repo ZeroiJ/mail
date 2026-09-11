@@ -1,6 +1,6 @@
 package com.example.mail.ui.screens.triage
 
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -64,7 +64,10 @@ import java.util.Date
 import java.util.Locale
 
 // ---------------------------------------------------------------------------
-// Swipe thresholds — minimum px drag to trigger an action.
+// Swipe thresholds — minimum px horizontal drag to trigger an action.
+// Only horizontal swipes are handled; vertical drags pass through to the
+// LazyColumn so the deck scrolls. (Up-swipe snooze was removed — it stole
+// vertical scroll gestures and made older emails unreachable.)
 // ---------------------------------------------------------------------------
 private const val SWIPE_THRESHOLD = 120f
 
@@ -73,7 +76,6 @@ private const val SWIPE_THRESHOLD = 120f
  * "Inbox Zero" in < 2 minutes:
  *   swipe left  → delete (StarkRed feedback)
  *   swipe right → archive
- *   swipe up    → snooze
  *
  * Top: OTP widget. Middle: paginated triage deck. Bottom: FloatingIsland.
  */
@@ -86,6 +88,8 @@ fun TriageScreen(
     val emailItems = viewModel.emails.collectAsLazyPagingItems()
     val otpItems = viewModel.otpEmails.collectAsLazyPagingItems()
     val isSyncing by viewModel.isSyncing.collectAsState()
+    val isLoadingMore by viewModel.isLoadingMore.collectAsState()
+    val hasMore by viewModel.hasMore.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.cleanupExpiredOtps()
@@ -144,7 +148,9 @@ fun TriageScreen(
                 onEmailClick = onEmailClick,
                 onDelete = { viewModel.delete(it) },
                 onArchive = { viewModel.archive(it) },
-                onSnooze = { viewModel.snooze(it) },
+                hasMore = hasMore,
+                isLoadingMore = isLoadingMore,
+                onLoadMore = { viewModel.loadMore() },
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
@@ -278,7 +284,9 @@ private fun TriageDeck(
     onEmailClick: (String) -> Unit,
     onDelete: (String) -> Unit,
     onArchive: (String) -> Unit,
-    onSnooze: (String) -> Unit,
+    hasMore: Boolean,
+    isLoadingMore: Boolean,
+    onLoadMore: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -294,8 +302,47 @@ private fun TriageDeck(
                 email = email,
                 onOpen = { onEmailClick(email.id) },
                 onDelete = { onDelete(email.id) },
-                onArchive = { onArchive(email.id) },
-                onSnooze = { onSnooze(email.id) }
+                onArchive = { onArchive(email.id) }
+            )
+        }
+        if (hasMore) {
+            item(key = "load-more") {
+                LoadMoreButton(
+                    isLoading = isLoadingMore,
+                    onClick = onLoadMore
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LoadMoreButton(
+    isLoading: Boolean,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .border(1.dp, BorderGray, RoundedCornerShape(12.dp))
+            .clickable(enabled = !isLoading, onClick = onClick)
+            .padding(vertical = 14.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(16.dp),
+                strokeWidth = 2.dp,
+                color = MutedGray
+            )
+        } else {
+            Text(
+                text = "LOAD MORE",
+                fontFamily = NDot,
+                fontSize = 13.sp,
+                color = PureWhite
             )
         }
     }
@@ -310,34 +357,26 @@ private fun SwipeableEmailCard(
     email: EmailMessage,
     onOpen: () -> Unit,
     onDelete: () -> Unit,
-    onArchive: () -> Unit,
-    onSnooze: () -> Unit
+    onArchive: () -> Unit
 ) {
     var offsetX by remember { mutableFloatStateOf(0f) }
-    var offsetY by remember { mutableFloatStateOf(0f) }
     var dismissed by remember { mutableStateOf(false) }
-
-    // Dominant swipe direction based on drag distance.
-    val isHorizontalSwipe = kotlin.math.abs(offsetX) > kotlin.math.abs(offsetY)
 
     // Visual feedback: red tint on delete, green tint on archive.
     val backgroundColor = when {
         dismissed -> Color.Transparent
-        isHorizontalSwipe && offsetX < -SWIPE_THRESHOLD / 2 ->
+        offsetX < -SWIPE_THRESHOLD / 2 ->
             StarkRed.copy(alpha = 0.3f * (kotlin.math.abs(offsetX) / 300f).coerceIn(0f, 1f))
-        isHorizontalSwipe && offsetX > SWIPE_THRESHOLD / 2 ->
-            Color(0xFF1B5E20).copy(alpha = 0.3f * (kotlin.math.abs(offsetX) / 300f).coerceIn(0f, 1f))
-        !isHorizontalSwipe && offsetY < -SWIPE_THRESHOLD / 2 ->
-            Color(0xFF0D47A1).copy(alpha = 0.3f * (kotlin.math.abs(offsetY) / 300f).coerceIn(0f, 1f))
+        offsetX > SWIPE_THRESHOLD / 2 ->
+            Color(0xFF1B5E20).copy(alpha = 0.3f * (offsetX / 300f).coerceIn(0f, 1f))
         else -> SurfaceDark
     }
 
     // Label shown during swipe.
     val swipeLabel = when {
         dismissed -> ""
-        isHorizontalSwipe && offsetX < -SWIPE_THRESHOLD / 2 -> "DELETE"
-        isHorizontalSwipe && offsetX > SWIPE_THRESHOLD / 2 -> "ARCHIVE"
-        !isHorizontalSwipe && offsetY < -SWIPE_THRESHOLD / 2 -> "SNOOZE"
+        offsetX < -SWIPE_THRESHOLD / 2 -> "DELETE"
+        offsetX > SWIPE_THRESHOLD / 2 -> "ARCHIVE"
         else -> ""
     }
 
@@ -349,39 +388,25 @@ private fun SwipeableEmailCard(
                 .clickable(onClick = onOpen)
                 .graphicsLayer {
                     translationX = offsetX
-                    translationY = offsetY
-                    // Slight rotation on horizontal swipe.
-                    rotationZ = if (isHorizontalSwipe) (offsetX / 50f).coerceIn(-8f, 8f) else 0f
-                    // Scale down slightly on vertical swipe.
-                    scaleX = if (!isHorizontalSwipe) 1f - (kotlin.math.abs(offsetY) / 1500f).coerceIn(0f, 0.1f) else 1f
-                    scaleY = scaleX
+                    rotationZ = (offsetX / 50f).coerceIn(-8f, 8f)
                 }
                 .pointerInput(Unit) {
-                    detectDragGestures(
+                    detectHorizontalDragGestures(
                         onDragEnd = {
                             when {
-                                isHorizontalSwipe && offsetX < -SWIPE_THRESHOLD -> {
+                                offsetX < -SWIPE_THRESHOLD -> {
                                     dismissed = true; onDelete()
                                 }
-                                isHorizontalSwipe && offsetX > SWIPE_THRESHOLD -> {
+                                offsetX > SWIPE_THRESHOLD -> {
                                     dismissed = true; onArchive()
                                 }
-                                !isHorizontalSwipe && offsetY < -SWIPE_THRESHOLD -> {
-                                    dismissed = true; onSnooze()
-                                }
-                                else -> {
-                                    // Snap back.
-                                    offsetX = 0f; offsetY = 0f
-                                }
+                                else -> offsetX = 0f
                             }
                         },
-                        onDragCancel = {
-                            offsetX = 0f; offsetY = 0f
-                        },
-                        onDrag = { change, dragAmount ->
+                        onDragCancel = { offsetX = 0f },
+                        onHorizontalDrag = { change, dragAmount ->
                             change.consume()
-                            offsetX += dragAmount.x
-                            offsetY += dragAmount.y
+                            offsetX += dragAmount
                         }
                     )
                 },
@@ -404,8 +429,7 @@ private fun SwipeableEmailCard(
                         fontSize = 10.sp,
                         color = when (swipeLabel) {
                             "DELETE" -> StarkRed
-                            "ARCHIVE" -> Color(0xFF4CAF50)
-                            else -> Color(0xFF42A5F5)
+                            else -> Color(0xFF4CAF50)
                         }
                     )
                 }

@@ -54,6 +54,16 @@ interface EmailRepository {
     suspend fun syncRecentEmails(): Int
 
     /**
+     * Fetch the NEXT page of the inbox using the stored page token.
+     * Returns the number inserted, or 0 when no further pages exist.
+     * Powers the on-request "LOAD MORE" batch loading.
+     */
+    suspend fun syncMoreEmails(): Int
+
+    /** True when the last list call returned a next-page token. */
+    suspend fun hasMoreEmails(): Boolean
+
+    /**
      * Network search against Gmail with a raw query string. Results are
      * upserted into Room so the reader can resolve them by ID, and returned
      * for immediate display.

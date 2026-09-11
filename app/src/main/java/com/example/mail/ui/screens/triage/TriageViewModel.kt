@@ -30,6 +30,12 @@ class TriageViewModel @Inject constructor(
     private val _isSyncing = MutableStateFlow(false)
     val isSyncing: StateFlow<Boolean> = _isSyncing.asStateFlow()
 
+    private val _isLoadingMore = MutableStateFlow(false)
+    val isLoadingMore: StateFlow<Boolean> = _isLoadingMore.asStateFlow()
+
+    private val _hasMore = MutableStateFlow(false)
+    val hasMore: StateFlow<Boolean> = _hasMore.asStateFlow()
+
     private val _lastSyncCount = MutableStateFlow(0)
     val lastSyncCount: StateFlow<Int> = _lastSyncCount.asStateFlow()
 
@@ -40,8 +46,22 @@ class TriageViewModel @Inject constructor(
             try {
                 val count = repository.syncRecentEmails()
                 _lastSyncCount.value = count
+                _hasMore.value = repository.hasMoreEmails()
             } finally {
                 _isSyncing.value = false
+            }
+        }
+    }
+
+    fun loadMore() {
+        if (_isLoadingMore.value) return
+        viewModelScope.launch {
+            _isLoadingMore.value = true
+            try {
+                repository.syncMoreEmails()
+                _hasMore.value = repository.hasMoreEmails()
+            } finally {
+                _isLoadingMore.value = false
             }
         }
     }

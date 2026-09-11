@@ -218,3 +218,5 @@ Living planning document. Check off items as they ship.
 - [x] BiometricGate removed (user request — direct to triage after auth)
 - [x] Full inbox sync (was 24h window, now `in:inbox`)
 - [x] HTML rendering in reader (sandboxed WebView, JS/file access off)
+- [x] Snooze swipe removed (was stealing vertical scroll — deck now scrolls)
+- [x] Batch loading (sync 20→50 per page + LOAD MORE button with pageToken)

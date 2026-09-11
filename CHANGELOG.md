@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Deck scroll blocked by snooze gesture:** `detectDragGestures` consumed all drags including vertical, so the LazyColumn never scrolled. Replaced with `detectHorizontalDragGestures` and deleted the up-swipe snooze path entirely — swipe left/right still works, vertical drags now scroll.
+- **Older emails unreachable:** sync capped at 20 messages with no pagination. Bumped batch to 50 and added `syncMoreEmails()` driven by Gmail `nextPageToken`, with a trailing LOAD MORE button in the deck (spinner while fetching, hidden when exhausted).
+
 ### Added
 - **Email search (v1):** `repository.searchEmails(query)` hits Gmail network search, upserts results into Room, returns list. New `SearchScreen` with debounced (400ms) query input, results list, empty state, clear button. `search` route in NavHost + magnifier button in triage header. Operator chips and search history deferred to later.
 - **HTML email rendering:** `ReaderScreen` now renders `bodyHtml` in a sandboxed WebView (JavaScript disabled, file/content access off per AGENTS.md payload sandboxing). Falls back to `bodyMarkdown` plain text when HTML is blank.

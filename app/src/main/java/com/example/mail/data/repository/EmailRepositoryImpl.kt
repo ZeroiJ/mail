@@ -38,8 +38,11 @@ class EmailRepositoryImpl @Inject constructor(
     private companion object {
         // Sync the full inbox (user requested all emails, not just last 24h).
         const val QUERY_RECENT_DAY = "in:inbox"
-        const val SYNC_BATCH_SIZE = 20
+        const val SYNC_BATCH_SIZE = 50
     }
+
+    @Volatile
+    private var inboxNextPageToken: String? = null
 
     override fun getPagedEmails(): Flow<PagingData<EmailMessage>> {
         return Pager(
@@ -116,10 +119,12 @@ class EmailRepositoryImpl @Inject constructor(
         val listResult = runCatching {
             gmailApi.listMessages(q = QUERY_RECENT_DAY, maxResults = SYNC_BATCH_SIZE)
         }
-        val summaries = listResult.getOrElse { e ->
+        val response = listResult.getOrElse { e ->
             Log.e(tag, "Sync failed at list stage: ${e.message}")
             return@withContext 0
-        }.messages.orEmpty()
+        }
+        inboxNextPageToken = response.nextPageToken
+        val summaries = response.messages.orEmpty()
 
         if (summaries.isEmpty()) return@withContext 0
 
@@ -143,6 +148,45 @@ class EmailRepositoryImpl @Inject constructor(
         Log.i(tag, "Sync complete: ${entities.size} messages upserted")
         entities.size
     }
+
+    override suspend fun syncMoreEmails(): Int = withContext(Dispatchers.IO) {
+        val token = inboxNextPageToken ?: return@withContext 0
+        val response = runCatching {
+            gmailApi.listMessages(
+                q = QUERY_RECENT_DAY,
+                maxResults = SYNC_BATCH_SIZE,
+                pageToken = token
+            )
+        }.getOrElse { e ->
+            Log.e(tag, "Load-more failed at list stage: ${e.message}")
+            return@withContext 0
+        }
+        inboxNextPageToken = response.nextPageToken
+        val summaries = response.messages.orEmpty()
+        if (summaries.isEmpty()) return@withContext 0
+
+        val entities = coroutineScope {
+            summaries.map { summary ->
+                async {
+                    runCatching {
+                        mapToEntity(gmailApi.getMessage(id = summary.id, format = "full"))
+                    }.getOrElse { e ->
+                        Log.e(tag, "Load-more fetch failed for ${summary.id}: ${e.message}")
+                        null
+                    }
+                }
+            }.awaitAll().filterNotNull()
+        }
+
+        if (entities.isNotEmpty()) {
+            emailDao.insertAll(entities)
+        }
+
+        Log.i(tag, "Load-more complete: ${entities.size} messages upserted")
+        entities.size
+    }
+
+    override suspend fun hasMoreEmails(): Boolean = inboxNextPageToken != null
 
     override suspend fun searchEmails(query: String): List<EmailMessage> =
         withContext(Dispatchers.IO) {
