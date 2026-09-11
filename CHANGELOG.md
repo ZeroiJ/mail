@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-09-11
+
 ### Fixed
 - **Forced sign-in on every launch:** OAuth access tokens expire after 1 hour but `AuthManager` had no silent refresh — when the token lapsed, the `init` block set `TokenExpired` and the UI fell through to the sign-in screen. Now `init` optimistically sets `Authenticated` and fires `GoogleAuthUtil.getToken()` in a background thread; if the refresh succeeds the new token is stored and the user never sees the sign-in screen, if it fails the state flips to `SignedOut`.
 - **FloatingIsland buttons unresponsive:** `FloatingIslandIconButton` rendered the icon but never wired `action.onClick` to a `clickable` modifier — the Reply/Archive/Star/Delete actions were purely decorative. Added `.clickable(onClick = action.onClick)` so taps actually fire.
