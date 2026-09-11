@@ -40,13 +40,16 @@ Living planning document. Check off items as they ship.
 - [ ] Expand/collapse individual messages within a thread
 - [ ] Mark as read on open
 
-### Search
+### Search (basic v1 — full operator UI later)
+- [x] `searchEmails(query)` in repository (network → upsert Room → return list)
+- [x] `SearchViewModel` with 400ms debounce
+- [x] `SearchScreen` — search bar, results list, empty state, clear button
+- [x] `search` route in NavHost + magnifier button in triage header
 - [ ] `SearchHistory` Room entity (`query`, `timestamp`, `id`)
 - [ ] `SearchHistoryDao` with insert/getRecent(limit)/delete
-- [ ] `SearchScreen` — search bar, operator chips (From, To, Subject, Has Attachment, Date)
+- [ ] Operator chips (From, To, Subject, Has Attachment, Date)
 - [ ] Recent searches list below search bar
 - [ ] Search filters sheet (label, date range, attachment type)
-- [ ] Reuse `listMessages` with `q` parameter + `in:anywhere`
 
 ### Multi-Account
 - [ ] `GmailAccount` Room entity (`accountId`, `email`, `displayName`, `photoUrl`, `isActive`, `token`, `syncEnabled`)
@@ -206,8 +209,12 @@ Living planning document. Check off items as they ship.
 
 ### Post-v1.0.0 Fixes
 - [x] Base64 URL-safe decoding fix (email body garble)
-- [x] FloatingIsland backdrop blur (API 31+)
 - [x] FloatingIsland button onClick wiring
+- [x] FloatingIsland blur removed (reverted to crisp translucent look)
 - [x] Google sign-in main-thread fix
 - [x] GET_ACCOUNTS + USE_CREDENTIALS permissions
 - [x] UserRecoverableAuthException handling
+- [x] Silent token refresh (no forced re-login)
+- [x] BiometricGate removed (user request — direct to triage after auth)
+- [x] Full inbox sync (was 24h window, now `in:inbox`)
+- [x] HTML rendering in reader (sandboxed WebView, JS/file access off)

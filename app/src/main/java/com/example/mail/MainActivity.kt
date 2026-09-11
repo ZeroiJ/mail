@@ -14,9 +14,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.mail.ui.components.BiometricGate
 import com.example.mail.ui.screens.auth.SignInScreen
 import com.example.mail.ui.screens.reader.ReaderScreen
+import com.example.mail.ui.screens.search.SearchScreen
 import com.example.mail.ui.screens.triage.TriageScreen
 import com.example.mail.ui.theme.NothingTheme
 import com.example.mail.util.AuthManager
@@ -57,28 +57,37 @@ class MainActivity : AppCompatActivity() {
                 val authState by authManager.authState.collectAsState()
 
                 if (authState is AuthState.Authenticated) {
-                    BiometricGate(activity = this@MainActivity) {
-                        val navController = rememberNavController()
-                        NavHost(
-                            navController = navController,
-                            startDestination = "triage",
-                            modifier = Modifier.fillMaxSize()
+                    val navController = rememberNavController()
+                    NavHost(
+                        navController = navController,
+                        startDestination = "triage",
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        composable("triage") {
+                            TriageScreen(
+                                onEmailClick = { emailId ->
+                                    navController.navigate("reader/$emailId")
+                                },
+                                onSearchClick = {
+                                    navController.navigate("search")
+                                }
+                            )
+                        }
+                        composable("search") {
+                            SearchScreen(
+                                onBack = { navController.popBackStack() },
+                                onEmailClick = { emailId ->
+                                    navController.navigate("reader/$emailId")
+                                }
+                            )
+                        }
+                        composable(
+                            route = "reader/{emailId}",
+                            arguments = listOf(
+                                navArgument("emailId") { type = NavType.StringType }
+                            )
                         ) {
-                            composable("triage") {
-                                TriageScreen(
-                                    onEmailClick = { emailId ->
-                                        navController.navigate("reader/$emailId")
-                                    }
-                                )
-                            }
-                            composable(
-                                route = "reader/{emailId}",
-                                arguments = listOf(
-                                    navArgument("emailId") { type = NavType.StringType }
-                                )
-                            ) {
-                                ReaderScreen(onBack = { navController.popBackStack() })
-                            }
+                            ReaderScreen(onBack = { navController.popBackStack() })
                         }
                     }
                 } else {

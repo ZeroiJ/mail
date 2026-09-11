@@ -32,6 +32,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.mail.data.local.EmailMessage
 import com.example.mail.ui.components.ActionCard
@@ -47,8 +48,10 @@ import com.example.mail.util.FallbackGenerator
 import com.example.mail.util.HtmlStripper
 
 /**
- * Reader / detail view bound entirely to the local Room flow: strips the HTML
- * payload to plain text and pins extracted OTPs and actionable data on top.
+ * Reader / detail view bound to the local Room flow. Renders the raw HTML
+ * in a sandboxed WebView (JS/file/content access all disabled per the
+ * AGENTS.md payload sandboxing rule) with tracking pixels already stripped
+ * at sync time. Pins extracted OTPs and actionable data on top.
  * Never waits on the network.
  */
 @Composable
@@ -155,16 +158,37 @@ private fun readerContent(
             }
 
             Spacer(modifier = Modifier.height(20.dp))
-            Text(
-                text = body,
-                fontFamily = Geist,
-                fontSize = 15.sp,
-                lineHeight = 22.sp,
-                color = PureWhite,
-                modifier = Modifier.padding(bottom = 32.dp)
+            SandboxedHtmlView(
+                html = email.bodyHtml.ifBlank { email.bodyMarkdown },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 32.dp)
             )
         }
     }
+}
+
+@Composable
+private fun SandboxedHtmlView(
+    html: String,
+    modifier: Modifier = Modifier
+) {
+    AndroidView(
+        modifier = modifier.height(1200.dp),
+        factory = { context ->
+            android.webkit.WebView(context).apply {
+                settings.javaScriptEnabled = false
+                settings.allowFileAccess = false
+                settings.allowContentAccess = false
+                settings.blockNetworkImage = false
+                setBackgroundColor(android.graphics.Color.BLACK)
+                webViewClient = android.webkit.WebViewClient()
+            }
+        },
+        update = { webView ->
+            webView.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null)
+        }
+    )
 }
 
 @Composable

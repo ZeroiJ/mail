@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -79,7 +80,8 @@ private const val SWIPE_THRESHOLD = 120f
 @Composable
 fun TriageScreen(
     viewModel: TriageViewModel = hiltViewModel(),
-    onEmailClick: (String) -> Unit = {}
+    onEmailClick: (String) -> Unit = {},
+    onSearchClick: () -> Unit = {}
 ) {
     val emailItems = viewModel.emails.collectAsLazyPagingItems()
     val otpItems = viewModel.otpEmails.collectAsLazyPagingItems()
@@ -108,7 +110,8 @@ fun TriageScreen(
             TriageHeader(
                 triageCount = emailItems.itemCount,
                 isSyncing = isSyncing,
-                onSync = { viewModel.sync() }
+                onSync = { viewModel.sync() },
+                onSearchClick = onSearchClick
             )
 
             // ── OTP Widget Section ──────────────────────────────────────────
@@ -176,7 +179,8 @@ fun TriageScreen(
 private fun TriageHeader(
     triageCount: Int,
     isSyncing: Boolean,
-    onSync: () -> Unit
+    onSync: () -> Unit,
+    onSearchClick: () -> Unit = {}
 ) {
     val dateLabel = SimpleDateFormat("MMM d", Locale.US).format(Date())
 
@@ -197,6 +201,7 @@ private fun TriageHeader(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            SearchButton(onSearch = onSearchClick)
             SyncButton(isSyncing = isSyncing, onSync = onSync)
             Text(
                 text = dateLabel.uppercase(),
@@ -211,6 +216,25 @@ private fun TriageHeader(
                 color = PureWhite
             )
         }
+    }
+}
+
+@Composable
+private fun SearchButton(onSearch: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .border(1.dp, BorderGray, RoundedCornerShape(50))
+            .clickable(onClick = onSearch)
+            .padding(horizontal = 10.dp, vertical = 6.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Search,
+            contentDescription = "Search",
+            tint = MutedGray,
+            modifier = Modifier.size(14.dp)
+        )
     }
 }
 

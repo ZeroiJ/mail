@@ -36,9 +36,8 @@ class EmailRepositoryImpl @Inject constructor(
     private val tag = "EmailRepoImpl"
 
     private companion object {
-        // Restrict sync to the inbox so archived/snoozed/trashed messages
-        // are not resurrected locally on every poll.
-        const val QUERY_RECENT_DAY = "in:inbox newer_than:1d"
+        // Sync the full inbox (user requested all emails, not just last 24h).
+        const val QUERY_RECENT_DAY = "in:inbox"
         const val SYNC_BATCH_SIZE = 20
     }
 
@@ -144,6 +143,36 @@ class EmailRepositoryImpl @Inject constructor(
         Log.i(tag, "Sync complete: ${entities.size} messages upserted")
         entities.size
     }
+
+    override suspend fun searchEmails(query: String): List<EmailMessage> =
+        withContext(Dispatchers.IO) {
+            val summaries = runCatching {
+                gmailApi.listMessages(q = query, maxResults = SYNC_BATCH_SIZE)
+            }.getOrElse { e ->
+                Log.e(tag, "Search failed at list stage: ${e.message}")
+                return@withContext emptyList()
+            }.messages.orEmpty()
+
+            if (summaries.isEmpty()) return@withContext emptyList()
+
+            val entities = coroutineScope {
+                summaries.map { summary ->
+                    async {
+                        runCatching {
+                            mapToEntity(gmailApi.getMessage(id = summary.id, format = "full"))
+                        }.getOrElse { e ->
+                            Log.e(tag, "Search fetch failed for ${summary.id}: ${e.message}")
+                            null
+                        }
+                    }
+                }.awaitAll().filterNotNull()
+            }
+
+            if (entities.isNotEmpty()) {
+                emailDao.insertAll(entities)
+            }
+            entities
+        }
 
     private suspend fun mapToEntity(detail: MessageDetailDto): EmailMessage? {
         val headers = detail.payload?.headers

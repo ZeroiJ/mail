@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Email search (v1):** `repository.searchEmails(query)` hits Gmail network search, upserts results into Room, returns list. New `SearchScreen` with debounced (400ms) query input, results list, empty state, clear button. `search` route in NavHost + magnifier button in triage header. Operator chips and search history deferred to later.
+- **HTML email rendering:** `ReaderScreen` now renders `bodyHtml` in a sandboxed WebView (JavaScript disabled, file/content access off per AGENTS.md payload sandboxing). Falls back to `bodyMarkdown` plain text when HTML is blank.
+
+### Changed
+- **App lock removed:** `BiometricGate` wrapper dropped from `MainActivity` — app opens directly to triage after auth per user request.
+- **Full inbox sync:** query changed from `in:inbox newer_than:1d` to `in:inbox` — sync pulls all emails, not just last 24h.
+
 ## [1.1.0] - 2026-09-11
 
 ### Fixed

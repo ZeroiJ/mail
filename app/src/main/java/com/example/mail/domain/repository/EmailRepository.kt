@@ -52,4 +52,11 @@ interface EmailRepository {
      * or updated messages inserted.
      */
     suspend fun syncRecentEmails(): Int
+
+    /**
+     * Network search against Gmail with a raw query string. Results are
+     * upserted into Room so the reader can resolve them by ID, and returned
+     * for immediate display.
+     */
+    suspend fun searchEmails(query: String): List<EmailMessage>
 }
