@@ -64,7 +64,14 @@ class AuthManager @Inject constructor(
     // Credential Manager — launch bottom-sheet account picker
     // -----------------------------------------------------------------------
 
-    suspend fun signIn(activity: android.app.Activity): Result<String> = withContext(Dispatchers.IO) {
+    /**
+     * Launches the Google sign-in flow.
+     *
+     * [credentialManager.getCredential] MUST run on the main thread — wrapping
+     * it in `withContext(Dispatchers.IO)` throws IllegalStateException and the
+     * bottom sheet silently fails. Only the token exchange moves off-thread.
+     */
+    suspend fun signIn(activity: android.app.Activity): Result<String> {
         try {
             val credentialManager = CredentialManager.create(activity)
 
@@ -88,22 +95,22 @@ class AuthManager @Inject constructor(
                 val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
                 val accountName = googleIdTokenCredential.id
 
-                val accessToken = fetchAccessToken(accountName)
+                val accessToken = fetchAccessToken(activity, accountName)
                 if (accessToken != null) {
                     _authState.value = AuthState.Authenticated(accountName)
-                    Result.success(accountName)
+                    return Result.success(accountName)
                 } else {
-                    Result.failure(Exception("Failed to obtain access token"))
+                    return Result.failure(Exception("Failed to obtain access token"))
                 }
             } else {
-                Result.failure(Exception("Unexpected credential type: ${credential.type}"))
+                return Result.failure(Exception("Unexpected credential type: ${credential.type}"))
             }
         } catch (e: GetCredentialException) {
             Log.e(tag, "Credential Manager failed: ${e.message}")
-            Result.failure(e)
+            return Result.failure(e)
         } catch (e: Exception) {
             Log.e(tag, "Sign-in failed: ${e.message}")
-            Result.failure(e)
+            return Result.failure(e)
         }
     }
 
@@ -111,7 +118,10 @@ class AuthManager @Inject constructor(
     // GoogleAuthUtil — fetch OAuth token with gmail.modify scope
     // -----------------------------------------------------------------------
 
-    private suspend fun fetchAccessToken(accountName: String): String? = withContext(Dispatchers.IO) {
+    private suspend fun fetchAccessToken(
+        activity: android.app.Activity,
+        accountName: String
+    ): String? = withContext(Dispatchers.IO) {
         try {
             val token = GoogleAuthUtil.getToken(
                 context,
@@ -122,6 +132,11 @@ class AuthManager @Inject constructor(
             storeToken(accountName, token, System.currentTimeMillis() + 3600_000L)
             Log.i(tag, "Access token obtained for $accountName")
             token
+        } catch (e: com.google.android.gms.auth.UserRecoverableAuthException) {
+            // First-time OAuth consent for gmail.modify — launch the recovery intent
+            Log.w(tag, "User consent required for ${e.message}")
+            activity.runOnUiThread { activity.startActivity(e.intent) }
+            null
         } catch (e: Exception) {
             Log.e(tag, "Failed to fetch access token: ${e.message}")
             null

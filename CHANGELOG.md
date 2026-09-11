@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Google sign-in silent failure:** `AuthManager.signIn()` wrapped `credentialManager.getCredential()` in `withContext(Dispatchers.IO)` — Credential Manager requires the main thread, so the bottom sheet never appeared. Removed the blanket IO dispatcher; only `GoogleAuthUtil.getToken()` now runs off-thread.
+- **Missing `GET_ACCOUNTS` permission** required by `GoogleAuthUtil.getToken()` — added `GET_ACCOUNTS` and `USE_CREDENTIALS` to `AndroidManifest.xml`.
+- **OAuth consent flow dead-end:** `UserRecoverableAuthException` (first-time `gmail.modify` consent) was caught by a blanket handler and the recovery intent was never launched. Now explicitly caught and `startActivity(e.intent)` is called so the user can approve the scope.
+
 ### Removed
 - **GitHub Actions release workflow** (`.github/workflows/release.yml`) — it only ever produced a debug APK (`assembleDebug`) and had fragile publishing. Releases are now cut locally: a signed release APK is built by hand and published to the GitHub Release.
 
