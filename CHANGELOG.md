@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-09-11
+
 ### Added
 - **Data layer (Room + Paging 3):**
   - `EmailMessage` Room entity matching the AGENTS.md schema (including `isOTP`, `expiresAt`, `bodyMarkdown`).
@@ -117,6 +119,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `app/build.gradle.kts`: the release build type now runs R8 (`isMinifyEnabled = true`) with resource shrinking (`isShrinkResources = true`).
   - `proguard-rules.pro`: `-assumenosideeffects` strips every `android.util.Log` call from the release binary (verified: zero `android.util.Log` references remain in the release dex), plus keep rules for Room (`RoomDatabase` subclasses), Hilt (`@HiltViewModel` constructors + `dagger.hilt.**`), and SQLCipher (`net.sqlcipher.**` / `net.zetetic.**` JNI-bound classes).
 - **STRUCTURE.md** rewritten against the as-built tree: real file inventory for `data/remote/`, `domain/repository/`, `di/`, `ui/`, `util/`, and `worker/` (no more stale `(empty)` markers), resources listing, project-level files, and the three security phases marked **done** with as-implemented details.
+- **Gradle wrapper committed:** `gradlew`, `gradlew.bat`, and `gradle/wrapper/*` (Gradle 8.7) added so the `.github/workflows/release.yml` release pipeline can actually build in CI — previously it ran `chmod +x gradlew` but the wrapper was never committed.
 
 ## [0.0.0] - 2026-09-09
 - Project scaffolded: AGENTS.md system prompt, STRUCTURE.md layout reference, and initial data/Room layer.
