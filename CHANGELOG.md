@@ -108,6 +108,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `ui/components/BiometricGate`: prompts via `androidx.biometric:1.2.0-alpha05` on cold launch and every `ON_RESUME` (re-locking on background return), showing a pure-black N-Dot lock screen until success; allows `DEVICE_CREDENTIAL` fallback (PIN/pattern/password) so a device without biometrics is never silently bypassed; `isPromptShowing` guard prevents double-`authenticate()` races.
   - `MainActivity` switched from `ComponentActivity` to `AppCompatActivity` (BiometricPrompt requires a `FragmentActivity`) and wraps the post-auth NavHost in `BiometricGate` — email content composes only after biometric success.
   - `themes.xml` parent changed to `Theme.AppCompat.NoActionBar` (AppCompatActivity requirement); added `androidx.biometric` + `androidx.appcompat` dependencies.
+- **Custom Gemini-style launcher icon (`res/`):**
+  - `drawable/ic_logo.xml`: white capital "G" on a 512×512 viewport (scaled into the adaptive-icon safe zone), replacing the placeholder envelope glyph.
+  - `mipmap-anydpi-v26/ic_launcher.xml` + `ic_launcher_round.xml` now attach `@drawable/ic_logo` as the foreground over the pure OLED black background; the now-dead `ic_launcher_foreground.xml` was removed.
+- **Network security hardening (AGENTS.md payload sandboxing):**
+  - `res/xml/network_security_config.xml`: `<base-config cleartextTrafficPermitted="false">` bans cleartext HTTP platform-wide; wired into the manifest via `android:networkSecurityConfig`. The Gmail REST API only ever speaks HTTPS, so no legitimate traffic is affected.
+- **Release build hardening (AGENTS.md build hardening):**
+  - `app/build.gradle.kts`: the release build type now runs R8 (`isMinifyEnabled = true`) with resource shrinking (`isShrinkResources = true`).
+  - `proguard-rules.pro`: `-assumenosideeffects` strips every `android.util.Log` call from the release binary (verified: zero `android.util.Log` references remain in the release dex), plus keep rules for Room (`RoomDatabase` subclasses), Hilt (`@HiltViewModel` constructors + `dagger.hilt.**`), and SQLCipher (`net.sqlcipher.**` / `net.zetetic.**` JNI-bound classes).
 
 ## [0.0.0] - 2026-09-09
 - Project scaffolded: AGENTS.md system prompt, STRUCTURE.md layout reference, and initial data/Room layer.

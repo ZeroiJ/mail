@@ -127,10 +127,11 @@ Per AGENTS.md "Security & Anti-Exploit Protocol":
 - **SQLCipher** database encryption — 256-bit AES master key held in the Android Keystore, injected into Room via `SupportFactory` (`util/security/CryptoManager`, `DatabaseModule`).
 - **Biometric / device-credential gate** — `BiometricGate` re-locks on every resume; PIN/pattern/password fallback, never a silent bypass.
 - **FLAG_SECURE** on `MainActivity` blocks OS background snapshots and screen recording.
+- **R8 minification + resource shrinking** — release APKs are minified/obfuscated with all `android.util.Log` calls stripped via `-assumenosideeffects` (no PII leaks through logcat), with keep rules for Room/Hilt/SQLCipher.
+- **Cleartext banned** — `network_security_config.xml` sets `cleartextTrafficPermitted="false"` platform-wide; the Gmail REST API is HTTPS-only.
 
 ### Planned
-- **R8 minification** + `android.util.Log` stripping in release builds
-- **WebView hardening** — JavaScript disabled, cleartext traffic banned
+- **WebView hardening** — JavaScript disabled and local file/content access off, if a WebView is ever introduced (reader mode currently strips HTML to plain text instead).
 
 ---
 
