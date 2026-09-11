@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+- **GitHub Actions release workflow** (`.github/workflows/release.yml`) — it only ever produced a debug APK (`assembleDebug`) and had fragile publishing. Releases are now cut locally: a signed release APK is built by hand and published to the GitHub Release.
+
+### Added
+- **Release APK signing:** `app/build.gradle.kts` now defines a `release` signing config loaded from the gitignored `keystore.properties` at the repo root. The keystore itself lives outside the repo (`~/.android/keys/nothing-mail-release.jks`, 10,000-day RSA-2048 cert `CN=Nothing Mail`); on a fresh clone release builds stay unsigned, which is safe. `assembleRelease` now emits an installable, R8-minified `app-release.apk` (verified: `apksigner` accepts the cert, zero `android.util.Log` references survive in the dex).
+
 ## [1.0.0] - 2026-09-11
 
 ### Added
