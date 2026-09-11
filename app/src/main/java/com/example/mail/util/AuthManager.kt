@@ -32,7 +32,7 @@ class AuthManager @Inject constructor(
         private const val KEY_ACCOUNT_NAME = "account_name"
         private const val KEY_TOKEN_EXPIRY = "token_expiry"
 
-        private const val WEB_CLIENT_ID = "808026645220-inmpi32m9s69e8h04ur0jk6ktm5396k2.apps.googleusercontent.com"
+        private const val WEB_CLIENT_ID = "808026645220-0sbqnhgbnhcj7pbncr1m6p4nvckg0euo.apps.googleusercontent.com"
 
         private val GMAIL_SCOPES = setOf(
             Scope("https://www.googleapis.com/auth/gmail.modify")
