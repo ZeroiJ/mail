@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- **Forced sign-in on every launch:** OAuth access tokens expire after 1 hour but `AuthManager` had no silent refresh — when the token lapsed, the `init` block set `TokenExpired` and the UI fell through to the sign-in screen. Now `init` optimistically sets `Authenticated` and fires `GoogleAuthUtil.getToken()` in a background thread; if the refresh succeeds the new token is stored and the user never sees the sign-in screen, if it fails the state flips to `SignedOut`.
 - **FloatingIsland buttons unresponsive:** `FloatingIslandIconButton` rendered the icon but never wired `action.onClick` to a `clickable` modifier — the Reply/Archive/Star/Delete actions were purely decorative. Added `.clickable(onClick = action.onClick)` so taps actually fire.
 - **Email body decoding garble:** `EmailRepositoryImpl.decodeBase64Url()` converted URL-safe base64 to standard but still used `Base64.DEFAULT`, which chokes on missing padding (Gmail omits `=`). Switched to `Base64.URL_SAFE | Base64.NO_WRAP | Base64.NO_PADDING` and removed the manual `-`→`+` / `_`→`/` rewrite — the Android decoder handles URL-safe directly.
 - **FloatingIsland missing blur:** the "glassmorphic" pill used only semi-transparent alpha on a gradient background with no actual backdrop blur. Added `Modifier.graphicsLayer` with `RenderEffect.createBlurEffect(16f, 16f, CLAMP)` on API 31+ (Android 12+); pre-12 devices keep the translucent fallback since `RenderEffect` is unavailable.

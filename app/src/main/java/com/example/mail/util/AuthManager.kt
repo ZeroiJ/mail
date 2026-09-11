@@ -53,8 +53,12 @@ class AuthManager @Inject constructor(
 
         if (cached != null && accountName != null && expiry > System.currentTimeMillis()) {
             _authState.value = AuthState.Authenticated(accountName)
-        } else if (cached != null) {
-            _authState.value = AuthState.TokenExpired(accountName.orEmpty())
+        } else if (cached != null && accountName != null) {
+            // Token expired — attempt silent refresh in background.
+            _authState.value = AuthState.Authenticated(accountName)
+            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                tryRefreshToken(accountName)
+            }
         } else {
             _authState.value = AuthState.SignedOut
         }
@@ -178,6 +182,23 @@ class AuthManager @Inject constructor(
 
     fun isSignedIn(): Boolean {
         return getStoredAccessToken() != null
+    }
+
+    private fun tryRefreshToken(accountName: String) {
+        Thread {
+            try {
+                val token = GoogleAuthUtil.getToken(
+                    context,
+                    accountName,
+                    "oauth2:https://www.googleapis.com/auth/gmail.modify"
+                )
+                storeToken(accountName, token, System.currentTimeMillis() + 3600_000L)
+                Log.i(tag, "Token refreshed silently for $accountName")
+            } catch (e: Exception) {
+                Log.w(tag, "Silent refresh failed: ${e.message}")
+                _authState.value = AuthState.SignedOut
+            }
+        }.start()
     }
 
     private fun createEncryptedPrefs(): SharedPreferences {
