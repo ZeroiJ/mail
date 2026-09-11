@@ -232,10 +232,27 @@ object FallbackGenerator {
     }
 
     /**
-     * Extract OTP codes (4–8 digits) from email text.
+     * Extract OTP codes (4–8 digits) from email text. Only returns digits
+     * that appear within OTP keyword context (code, verification, etc.) —
+     * bare numbers like years or order IDs must never match.
      */
     fun extractOtp(text: String): String {
-        val otpPattern = Regex("""\b(\d{4,8})\b""")
-        return otpPattern.find(text)?.value.orEmpty()
+        val lower = text.lowercase()
+        val digitPattern = Regex("""\b(\d{4,8})\b""")
+        for (match in digitPattern.findAll(text)) {
+            val contextStart = maxOf(0, match.range.first - 80)
+            val context = lower.substring(contextStart, match.range.first)
+            if (otpKeywords.any { it in context }) {
+                return match.value
+            }
+        }
+        return ""
     }
+
+    private val otpKeywords = listOf(
+        "otp", "one-time", "one time", "verification", "verify",
+        "passcode", "security code", "2fa", "two-factor", "two factor",
+        "authentication code", "login code", "confirm", "validate",
+        "code is", "code:", "is your code", "use code", "enter code"
+    )
 }

@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- **False OTP cards on every email:** `FallbackGenerator.extractOtp` matched the first bare 4–8 digit number in any body (years, order IDs, amounts). Now requires OTP keyword context (code, verification, passcode, 2fa, etc.) within 80 chars before the digits. Reader and triage widget both suppress the card when no contextual code is found — stale `isOTP` rows self-heal without a migration.
+
+### Fixed
 - **Deck scroll blocked by snooze gesture:** `detectDragGestures` consumed all drags including vertical, so the LazyColumn never scrolled. Replaced with `detectHorizontalDragGestures` and deleted the up-swipe snooze path entirely — swipe left/right still works, vertical drags now scroll.
 - **Older emails unreachable:** sync capped at 20 messages with no pagination. Bumped batch to 50 and added `syncMoreEmails()` driven by Gmail `nextPageToken`, with a trailing LOAD MORE button in the deck (spinner while fetching, hidden when exhausted).
 

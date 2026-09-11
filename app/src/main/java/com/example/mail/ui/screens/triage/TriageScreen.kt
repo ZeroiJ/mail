@@ -59,6 +59,7 @@ import com.example.mail.ui.theme.OLEDBlack
 import com.example.mail.ui.theme.PureWhite
 import com.example.mail.ui.theme.StarkRed
 import com.example.mail.ui.theme.SurfaceDark
+import com.example.mail.util.FallbackGenerator
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -127,17 +128,22 @@ fun TriageScreen(
                 ) {
                     val firstOtp = otpItems[0]
                     if (firstOtp != null) {
-                        val remainingMs = firstOtp.expiresAt - System.currentTimeMillis()
-                        val remainingSec = (remainingMs / 1000).coerceAtLeast(0)
-                        OtpCard(
-                            sender = firstOtp.sender,
-                            otp = extractOtpCode(firstOtp.snippet),
-                            expiresInSeconds = remainingSec,
-                            tick = true,
-                            onCopy = { code ->
-                                clipboardManager.setText(AnnotatedString(code))
-                            }
+                        val code = FallbackGenerator.extractOtp(
+                            firstOtp.bodyMarkdown.ifBlank { firstOtp.snippet }
                         )
+                        if (code.isNotEmpty()) {
+                            val remainingMs = firstOtp.expiresAt - System.currentTimeMillis()
+                            val remainingSec = (remainingMs / 1000).coerceAtLeast(0)
+                            OtpCard(
+                                sender = firstOtp.sender,
+                                otp = code.chunked(1).joinToString(" "),
+                                expiresInSeconds = remainingSec,
+                                tick = true,
+                                onCopy = { otpCode ->
+                                    clipboardManager.setText(AnnotatedString(otpCode))
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -460,19 +466,6 @@ private fun SwipeableEmailCard(
                 }
             }
         }
-    }
-}
-
-// ===========================================================================
-// Helpers
-// ===========================================================================
-
-/** Extract the first OTP code from an email snippet (4–8 digits, possibly spaced). */
-private fun extractOtpCode(snippet: String): String {
-    val regex = Regex("""\b(\d{4,8})\b""")
-    return regex.find(snippet)?.value.orEmpty().let { raw ->
-        // Format as spaced digits for display: "4 8 2 1"
-        raw.chunked(1).joinToString(" ")
     }
 }
 

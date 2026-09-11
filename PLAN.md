@@ -220,3 +220,4 @@ Living planning document. Check off items as they ship.
 - [x] HTML rendering in reader (sandboxed WebView, JS/file access off)
 - [x] Snooze swipe removed (was stealing vertical scroll — deck now scrolls)
 - [x] Batch loading (sync 20→50 per page + LOAD MORE button with pageToken)
+- [x] OTP false positives fixed (keyword-context matching, stale flags self-heal)
