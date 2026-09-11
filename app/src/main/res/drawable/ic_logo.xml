@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Nothing Mail launcher glyph: white capital G on OLED black (Gemini-style). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+    <!-- Scaled into the adaptive-icon safe zone (inner 66dp of the 108dp canvas). -->
+    <group
+        android:scaleX="0.72"
+        android:scaleY="0.72"
+        android:pivotX="256"
+        android:pivotY="256">
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M410,214.3H256V300H344.6C332.3,338 297.7,364.3 256,364.3C197.1,364.3 148.6,316.9 148.6,256C148.6,195.1 197.1,147.7 256,147.7C282.6,147.7 306.6,157.1 325.1,172.9L385.7,112.3C351.7,80 306,60 256,60C147.7,60 60,147.7 60,256C60,364.3 147.7,452 256,452C355.7,452 422,381.7 422,280C422,257.4 419.7,235.1 410,214.3Z" />
+    </group>
+</vector>
