@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.1.0] - 2026-09-11
 
 ### Fixed
-- **FloatingIsland blur too strong:** Reduced blur radius from 16f to 3f — icons are now visible while retaining the glassmorphism effect.
+- **FloatingIsland blur removed:** RenderEffect backdrop blur was too aggressive even at 3f — reverted to the original crisp translucent gradient with border (the original defined look).
 - **FloatingIsland actions not wired:** `TriageScreen` called `FloatingIsland(state = islandState)` with no callbacks — Reply/Archive/Delete had no implementation. Now wired to the first email in the triage queue: Reply opens reader, Archive/Delete trigger the existing repository actions.
 - **Forced sign-in on every launch:** OAuth access tokens expire after 1 hour but `AuthManager` had no silent refresh — when the token lapsed, the `init` block set `TokenExpired` and the UI fell through to the sign-in screen. Now `init` optimistically sets `Authenticated` and fires `GoogleAuthUtil.getToken()` in a background thread; if the refresh succeeds the new token is stored and the user never sees the sign-in screen, if it fails the state flips to `SignedOut`.
 - **FloatingIsland buttons unresponsive:** `FloatingIslandIconButton` rendered the icon but never wired `action.onClick` to a `clickable` modifier — the Reply/Archive/Star/Delete actions were purely decorative. Added `.clickable(onClick = action.onClick)` so taps actually fire.
