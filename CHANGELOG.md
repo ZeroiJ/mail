@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- **Email body decoding garble:** `EmailRepositoryImpl.decodeBase64Url()` converted URL-safe base64 to standard but still used `Base64.DEFAULT`, which chokes on missing padding (Gmail omits `=`). Switched to `Base64.URL_SAFE | Base64.NO_WRAP | Base64.NO_PADDING` and removed the manual `-`→`+` / `_`→`/` rewrite — the Android decoder handles URL-safe directly.
+- **FloatingIsland missing blur:** the "glassmorphic" pill used only semi-transparent alpha on a gradient background with no actual backdrop blur. Added `Modifier.graphicsLayer` with `RenderEffect.createBlurEffect(16f, 16f, CLAMP)` on API 31+ (Android 12+); pre-12 devices keep the translucent fallback since `RenderEffect` is unavailable.
 - **Google sign-in silent failure:** `AuthManager.signIn()` wrapped `credentialManager.getCredential()` in `withContext(Dispatchers.IO)` — Credential Manager requires the main thread, so the bottom sheet never appeared. Removed the blanket IO dispatcher; only `GoogleAuthUtil.getToken()` now runs off-thread.
 - **Missing `GET_ACCOUNTS` permission** required by `GoogleAuthUtil.getToken()` — added `GET_ACCOUNTS` and `USE_CREDENTIALS` to `AndroidManifest.xml`.
 - **OAuth consent flow dead-end:** `UserRecoverableAuthException` (first-time `gmail.modify` consent) was caught by a blanket handler and the recovery intent was never launched. Now explicitly caught and `startActivity(e.intent)` is called so the user can approve the scope.

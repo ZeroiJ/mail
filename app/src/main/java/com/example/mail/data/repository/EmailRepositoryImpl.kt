@@ -206,8 +206,8 @@ class EmailRepositoryImpl @Inject constructor(
     private fun decodeBase64Url(data: String): String {
         return try {
             // Gmail uses URL-safe base64 without padding.
-            val padded = data.replace('-', '+').replace('_', '/')
-            val decoded = Base64.decode(padded, Base64.DEFAULT)
+            // NO_WRAP = reject line separators; NO_PADDING = ignore missing '='.
+            val decoded = Base64.decode(data, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
             String(decoded, Charsets.UTF_8)
         } catch (e: Exception) {
             Log.w(tag, "Base64 decode failed: ${e.message}")
