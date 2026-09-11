@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- AGENTS.md Payload Sandboxing: the Gmail REST API only speaks HTTPS;
+     cleartext traffic is banned outright at the platform level. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+</network-security-config>
