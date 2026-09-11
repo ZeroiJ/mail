@@ -174,19 +174,28 @@ private fun SandboxedHtmlView(
     modifier: Modifier = Modifier
 ) {
     AndroidView(
-        modifier = modifier.height(1200.dp),
+        modifier = modifier.fillMaxWidth(),
         factory = { context ->
             android.webkit.WebView(context).apply {
+                layoutParams = android.view.ViewGroup.LayoutParams(
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                    android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+                )
                 settings.javaScriptEnabled = false
                 settings.allowFileAccess = false
                 settings.allowContentAccess = false
-                settings.blockNetworkImage = false
-                setBackgroundColor(android.graphics.Color.BLACK)
+                settings.useWideViewPort = true
+                settings.loadWithOverviewMode = true
+                isVerticalScrollBarEnabled = false
+                isHorizontalScrollBarEnabled = false
                 webViewClient = android.webkit.WebViewClient()
             }
         },
         update = { webView ->
-            webView.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null)
+            if (webView.tag != html) {
+                webView.tag = html
+                webView.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null)
+            }
         }
     )
 }
