@@ -121,7 +121,7 @@ fun FloatingIsland(
                 .graphicsLayer {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                         renderEffect = RenderEffect
-                            .createBlurEffect(16f, 16f, Shader.TileMode.CLAMP)
+                            .createBlurEffect(3f, 3f, Shader.TileMode.CLAMP)
                             .asComposeRenderEffect()
                     }
                 }

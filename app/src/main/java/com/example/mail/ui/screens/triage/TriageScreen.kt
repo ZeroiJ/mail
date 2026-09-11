@@ -156,7 +156,14 @@ fun TriageScreen(
                 .padding(bottom = 8.dp),
             contentAlignment = Alignment.BottomCenter
         ) {
-            FloatingIsland(state = islandState)
+            val firstEmail = if (emailItems.itemCount > 0) emailItems[0] else null
+            FloatingIsland(
+                state = islandState,
+                onReply = { firstEmail?.let { onEmailClick(it.id) } },
+                onArchive = { firstEmail?.let { viewModel.archive(it.id) } },
+                onStar = { /* TODO: add star action */ },
+                onDelete = { firstEmail?.let { viewModel.delete(it.id) } }
+            )
         }
     }
 }
