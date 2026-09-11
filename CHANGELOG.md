@@ -116,6 +116,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Release build hardening (AGENTS.md build hardening):**
   - `app/build.gradle.kts`: the release build type now runs R8 (`isMinifyEnabled = true`) with resource shrinking (`isShrinkResources = true`).
   - `proguard-rules.pro`: `-assumenosideeffects` strips every `android.util.Log` call from the release binary (verified: zero `android.util.Log` references remain in the release dex), plus keep rules for Room (`RoomDatabase` subclasses), Hilt (`@HiltViewModel` constructors + `dagger.hilt.**`), and SQLCipher (`net.sqlcipher.**` / `net.zetetic.**` JNI-bound classes).
+- **STRUCTURE.md** rewritten against the as-built tree: real file inventory for `data/remote/`, `domain/repository/`, `di/`, `ui/`, `util/`, and `worker/` (no more stale `(empty)` markers), resources listing, project-level files, and the three security phases marked **done** with as-implemented details.
 
 ## [0.0.0] - 2026-09-09
 - Project scaffolded: AGENTS.md system prompt, STRUCTURE.md layout reference, and initial data/Room layer.
