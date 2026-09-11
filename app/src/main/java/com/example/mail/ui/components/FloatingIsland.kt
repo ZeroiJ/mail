@@ -5,6 +5,7 @@ import android.graphics.Shader
 import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -154,7 +155,8 @@ private fun FloatingIslandIconButton(action: FloatingIslandAction) {
         modifier = Modifier
             .size(44.dp)
             .clip(CircleShape)
-            .background(Color.Transparent),
+            .background(Color.Transparent)
+            .clickable(onClick = action.onClick),
         contentAlignment = Alignment.Center
     ) {
         Icon(
