@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Compose (v1):** `repository.sendEmail()` builds an RFC822 plain-text payload (RFC2047-encoded subject) and posts via `messages.send`. `ComposeScreen` with To/CC (collapsible CC/BCC) / subject / body, SEND pill (disabled until To is filled, spinner while sending, error banner on failure) + SAVE DRAFT pill backed by a new `drafts` Room table (MailDatabase v3→v4). Entry via header compose button and FloatingIsland idle icon. Attachments, rich-text toolbar, auto-save, and signature deferred to fast-follow slices.
+
 ### Fixed
 - **False OTP cards on every email:** `FallbackGenerator.extractOtp` matched the first bare 4–8 digit number in any body (years, order IDs, amounts). Now requires OTP keyword context (code, verification, passcode, 2fa, etc.) within 80 chars before the digits. Reader and triage widget both suppress the card when no contextual code is found — stale `isOTP` rows self-heal without a migration.
 

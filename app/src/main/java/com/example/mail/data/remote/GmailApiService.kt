@@ -3,7 +3,11 @@ package com.example.mail.data.remote
 import com.example.mail.data.remote.dto.MessageDetailDto
 import com.example.mail.data.remote.dto.MessageListResponse
 import com.example.mail.data.remote.dto.ModifyMessageRequest
+import com.example.mail.data.remote.dto.SendMessageRequest
+import com.example.mail.data.remote.dto.DraftDto
+import com.example.mail.data.remote.dto.CreateDraftRequest
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
@@ -61,5 +65,46 @@ interface GmailApiService {
         @Path("userId") userId: String = "me",
         @Path("id") id: String,
         @Body request: ModifyMessageRequest
+    ): MessageDetailDto
+
+    /**
+     * Send an email. Backed by `POST /gmail/v1/users/{userId}/messages/send`.
+     *
+     * @param request base64url-encoded RFC822 message in `raw`.
+     */
+    @POST("gmail/v1/users/{userId}/messages/send")
+    suspend fun sendMessage(
+        @Path("userId") userId: String = "me",
+        @Body request: SendMessageRequest
+    ): MessageDetailDto
+
+    /**
+     * Create a server-side draft. Backed by
+     * `POST /gmail/v1/users/{userId}/drafts`.
+     */
+    @POST("gmail/v1/users/{userId}/drafts")
+    suspend fun createDraft(
+        @Path("userId") userId: String = "me",
+        @Body request: CreateDraftRequest
+    ): DraftDto
+
+    /**
+     * Delete a server-side draft. Backed by
+     * `DELETE /gmail/v1/users/{userId}/drafts/{id}`.
+     */
+    @DELETE("gmail/v1/users/{userId}/drafts/{id}")
+    suspend fun deleteDraft(
+        @Path("userId") userId: String = "me",
+        @Path("id") id: String
+    )
+
+    /**
+     * Send an existing draft. Backed by
+     * `POST /gmail/v1/users/{userId}/drafts/send`.
+     */
+    @POST("gmail/v1/users/{userId}/drafts/send")
+    suspend fun sendDraft(
+        @Path("userId") userId: String = "me",
+        @Body request: Map<String, String>
     ): MessageDetailDto
 }

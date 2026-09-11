@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Card
@@ -84,7 +85,8 @@ private const val SWIPE_THRESHOLD = 120f
 fun TriageScreen(
     viewModel: TriageViewModel = hiltViewModel(),
     onEmailClick: (String) -> Unit = {},
-    onSearchClick: () -> Unit = {}
+    onSearchClick: () -> Unit = {},
+    onComposeClick: () -> Unit = {}
 ) {
     val emailItems = viewModel.emails.collectAsLazyPagingItems()
     val otpItems = viewModel.otpEmails.collectAsLazyPagingItems()
@@ -116,7 +118,8 @@ fun TriageScreen(
                 triageCount = emailItems.itemCount,
                 isSyncing = isSyncing,
                 onSync = { viewModel.sync() },
-                onSearchClick = onSearchClick
+                onSearchClick = onSearchClick,
+                onComposeClick = onComposeClick
             )
 
             // ── OTP Widget Section ──────────────────────────────────────────
@@ -177,7 +180,8 @@ fun TriageScreen(
                 onReply = { firstEmail?.let { onEmailClick(it.id) } },
                 onArchive = { firstEmail?.let { viewModel.archive(it.id) } },
                 onStar = { /* TODO: add star action */ },
-                onDelete = { firstEmail?.let { viewModel.delete(it.id) } }
+                onDelete = { firstEmail?.let { viewModel.delete(it.id) } },
+                onCompose = onComposeClick
             )
         }
     }
@@ -192,7 +196,8 @@ private fun TriageHeader(
     triageCount: Int,
     isSyncing: Boolean,
     onSync: () -> Unit,
-    onSearchClick: () -> Unit = {}
+    onSearchClick: () -> Unit = {},
+    onComposeClick: () -> Unit = {}
 ) {
     val dateLabel = SimpleDateFormat("MMM d", Locale.US).format(Date())
 
@@ -213,6 +218,7 @@ private fun TriageHeader(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            ComposeButton(onCompose = onComposeClick)
             SearchButton(onSearch = onSearchClick)
             SyncButton(isSyncing = isSyncing, onSync = onSync)
             Text(
@@ -228,6 +234,25 @@ private fun TriageHeader(
                 color = PureWhite
             )
         }
+    }
+}
+
+@Composable
+private fun ComposeButton(onCompose: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(PureWhite)
+            .clickable(onClick = onCompose)
+            .padding(horizontal = 10.dp, vertical = 6.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Edit,
+            contentDescription = "Compose",
+            tint = OLEDBlack,
+            modifier = Modifier.size(14.dp)
+        )
     }
 }
 

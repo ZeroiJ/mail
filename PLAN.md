@@ -6,15 +6,18 @@ Living planning document. Check off items as they ship.
 
 ## Phase 1 — Core Email Operations (P0)
 
-### Compose
-- [ ] `POST /gmail/v1/users/me/messages/send` endpoint in `GmailApiService`
-- [ ] `POST /gmail/v1/users/me/drafts` (create/update/delete) endpoints
-- [ ] `Draft` Room entity (`id`, `threadId`, `to`, `cc`, `bcc`, `subject`, `body`, `attachmentIds`, `timestamp`)
-- [ ] `DraftDao` with insert/update/delete/getByThreadId
-- [ ] `ComposeScreen` — To/CC/BCC fields, subject, body, attachment picker
-- [ ] Auto-save draft on back press (every 30s or on text change)
-- [ ] Rich text toolbar (bold, italic, link, list)
-- [ ] Signature prepend from settings
+### Compose (v1 — text + CC/BCC + local drafts)
+- [x] `POST /gmail/v1/users/me/messages/send` endpoint in `GmailApiService`
+- [ ] `POST /gmail/v1/users/me/drafts` (create/update/delete) endpoints — declared, local-first for now
+- [x] `Draft` Room entity (`id`, `to`, `cc`, `bcc`, `subject`, `body`, `serverDraftId`, `updatedAt`)
+- [x] `DraftDao` with upsert/update/delete/getById/getAll
+- [x] `ComposeScreen` — To/CC/BCC (collapsible) fields, subject, body, SEND + SAVE DRAFT
+- [x] `compose` route + header compose button + FloatingIsland idle entry
+- [x] MailDatabase v3→v4 migration (creates `drafts` table)
+- [ ] Attachment picker (fast-follow slice)
+- [ ] Rich text toolbar (bold, italic, link, list) (fast-follow slice)
+- [ ] Signature prepend from settings (needs SettingsScreen first)
+- [ ] Auto-save draft on back press (every 30s or on text change) (fast-follow slice)
 
 ### Reply / Reply All / Forward
 - [ ] Parse `In-Reply-To` and `References` headers from `MessageDetailDto`
@@ -160,9 +163,9 @@ Living planning document. Check off items as they ship.
 ## Architecture Notes
 
 ### Room Migrations Needed
-- **v3→v4**: Add `isRead` to `EmailMessage` (conversation view)
-- **v4→v5**: Add `Label`, `EmailLabelCrossRef` tables (label management)
-- **v5→v6**: Add `Draft` table (compose/drafts)
+- **v3→v4**: Add `drafts` table (compose local drafts) — SHIPPED
+- **v4→v5**: Add `isRead` to `EmailMessage` (conversation view)
+- **v5→v6**: Add `Label`, `EmailLabelCrossRef` tables (label management)
 - **v6→v7**: Add `GmailAccount` table (multi-account)
 - **v7→v8**: Add `Attachment` table (attachment management)
 

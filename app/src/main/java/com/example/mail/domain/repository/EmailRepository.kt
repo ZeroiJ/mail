@@ -69,4 +69,25 @@ interface EmailRepository {
      * for immediate display.
      */
     suspend fun searchEmails(query: String): List<EmailMessage>
+
+    /**
+     * Send a plain-text email. Builds the RFC822 payload locally and posts
+     * it via `messages.send`. Returns the sent message ID, or null on failure.
+     */
+    suspend fun sendEmail(
+        to: String,
+        cc: String,
+        bcc: String,
+        subject: String,
+        body: String
+    ): String?
+
+    /** All local drafts, newest first. */
+    fun getDrafts(): Flow<List<com.example.mail.data.local.Draft>>
+
+    /** Insert or update a local draft. Returns the row ID. */
+    suspend fun saveDraft(draft: com.example.mail.data.local.Draft): Long
+
+    /** Delete a local draft by row ID. */
+    suspend fun deleteDraft(draftId: Long)
 }

@@ -5,12 +5,15 @@ import android.util.Log
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
+import com.example.mail.data.local.Draft
+import com.example.mail.data.local.DraftDao
 import com.example.mail.data.local.EmailDao
 import com.example.mail.data.local.EmailMessage
 import com.example.mail.data.remote.GmailApiService
 import com.example.mail.data.remote.dto.MessageDetailDto
 import com.example.mail.data.remote.dto.MessagePartDto
 import com.example.mail.data.remote.dto.ModifyMessageRequest
+import com.example.mail.data.remote.dto.SendMessageRequest
 import com.example.mail.domain.repository.EmailRepository
 import com.example.mail.util.AutoBundler
 import com.example.mail.util.BundleType
@@ -29,6 +32,7 @@ import javax.inject.Singleton
 @Singleton
 class EmailRepositoryImpl @Inject constructor(
     private val emailDao: EmailDao,
+    private val draftDao: DraftDao,
     private val gmailApi: GmailApiService,
     private val gemini: GeminiProcessor
 ) : EmailRepository {
@@ -217,6 +221,56 @@ class EmailRepositoryImpl @Inject constructor(
             }
             entities
         }
+
+    override suspend fun sendEmail(
+        to: String,
+        cc: String,
+        bcc: String,
+        subject: String,
+        body: String
+    ): String? = withContext(Dispatchers.IO) {
+        runCatching {
+            val raw = buildRfc822(to, cc, bcc, subject, body)
+            val encoded = Base64.encodeToString(raw, Base64.URL_SAFE or Base64.NO_WRAP)
+            gmailApi.sendMessage(request = SendMessageRequest(raw = encoded)).id
+        }.getOrElse { e ->
+            Log.e(tag, "Send failed: ${e.message}")
+            null
+        }
+    }
+
+    override fun getDrafts(): Flow<List<Draft>> = draftDao.getAll()
+
+    override suspend fun saveDraft(draft: Draft): Long = withContext(Dispatchers.IO) {
+        draftDao.upsert(draft.copy(updatedAt = System.currentTimeMillis()))
+    }
+
+    override suspend fun deleteDraft(draftId: Long) = withContext(Dispatchers.IO) {
+        draftDao.deleteById(draftId)
+    }
+
+    private fun buildRfc822(
+        to: String,
+        cc: String,
+        bcc: String,
+        subject: String,
+        body: String
+    ): ByteArray {
+        val subjectB64 = Base64.encodeToString(
+            subject.toByteArray(Charsets.UTF_8), Base64.NO_WRAP
+        )
+        val message = buildString {
+            append("To: $to\r\n")
+            if (cc.isNotBlank()) append("Cc: $cc\r\n")
+            if (bcc.isNotBlank()) append("Bcc: $bcc\r\n")
+            append("Subject: =?UTF-8?B?$subjectB64?=\r\n")
+            append("Content-Type: text/plain; charset=UTF-8\r\n")
+            append("Content-Transfer-Encoding: 8bit\r\n")
+            append("\r\n")
+            append(body)
+        }
+        return message.toByteArray(Charsets.UTF_8)
+    }
 
     private suspend fun mapToEntity(detail: MessageDetailDto): EmailMessage? {
         val headers = detail.payload?.headers

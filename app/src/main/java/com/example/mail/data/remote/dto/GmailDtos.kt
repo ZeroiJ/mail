@@ -60,3 +60,22 @@ data class ModifyMessageRequest(
     val addLabelIds: List<String> = emptyList(),
     val removeLabelIds: List<String> = emptyList()
 )
+
+/** Request body of `POST /gmail/v1/users/me/messages/send`. */
+@Serializable
+data class SendMessageRequest(
+    val raw: String
+)
+
+/** A server-side draft wrapping a message payload. */
+@Serializable
+data class DraftDto(
+    val id: String,
+    val message: MessageDetailDto? = null
+)
+
+/** Request body of `POST /gmail/v1/users/me/drafts`. */
+@Serializable
+data class CreateDraftRequest(
+    val message: SendMessageRequest
+)

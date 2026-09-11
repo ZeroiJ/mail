@@ -15,6 +15,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.mail.ui.screens.auth.SignInScreen
+import com.example.mail.ui.screens.compose.ComposeScreen
 import com.example.mail.ui.screens.reader.ReaderScreen
 import com.example.mail.ui.screens.search.SearchScreen
 import com.example.mail.ui.screens.triage.TriageScreen
@@ -70,7 +71,16 @@ class MainActivity : AppCompatActivity() {
                                 },
                                 onSearchClick = {
                                     navController.navigate("search")
+                                },
+                                onComposeClick = {
+                                    navController.navigate("compose")
                                 }
+                            )
+                        }
+                        composable("compose") {
+                            ComposeScreen(
+                                onBack = { navController.popBackStack() },
+                                onSent = { navController.popBackStack() }
                             )
                         }
                         composable("search") {

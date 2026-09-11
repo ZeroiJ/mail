@@ -6,13 +6,15 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
-    entities = [EmailMessage::class],
-    version = 3,
+    entities = [EmailMessage::class, Draft::class],
+    version = 4,
     exportSchema = true
 )
 abstract class MailDatabase : RoomDatabase() {
 
     abstract fun emailDao(): EmailDao
+
+    abstract fun draftDao(): DraftDao
 
     companion object {
 
@@ -35,6 +37,26 @@ abstract class MailDatabase : RoomDatabase() {
         val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE email_messages ADD COLUMN snoozedUntil INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
+        /**
+         * v3 -> v4: create `drafts` table for local compose drafts.
+         * Fresh table, no data to preserve.
+         */
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS drafts (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "to TEXT NOT NULL DEFAULT '', " +
+                        "cc TEXT NOT NULL DEFAULT '', " +
+                        "bcc TEXT NOT NULL DEFAULT '', " +
+                        "subject TEXT NOT NULL DEFAULT '', " +
+                        "body TEXT NOT NULL DEFAULT '', " +
+                        "serverDraftId TEXT, " +
+                        "updatedAt INTEGER NOT NULL DEFAULT 0)"
+                )
             }
         }
     }

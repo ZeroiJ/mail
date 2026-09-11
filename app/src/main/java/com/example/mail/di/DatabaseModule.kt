@@ -2,6 +2,7 @@ package com.example.mail.di
 
 import android.content.Context
 import androidx.room.Room
+import com.example.mail.data.local.DraftDao
 import com.example.mail.data.local.EmailDao
 import com.example.mail.data.local.MailDatabase
 import com.example.mail.data.repository.EmailRepositoryImpl
@@ -29,13 +30,21 @@ object DatabaseModule {
             "mail.db"
         )
             .openHelperFactory(CryptoManager.getOrCreateSupportFactory(context))
-            .addMigrations(MailDatabase.MIGRATION_1_2, MailDatabase.MIGRATION_2_3)
+            .addMigrations(
+                MailDatabase.MIGRATION_1_2,
+                MailDatabase.MIGRATION_2_3,
+                MailDatabase.MIGRATION_3_4
+            )
             .build()
     }
 
     @Provides
     @Singleton
     fun provideEmailDao(database: MailDatabase): EmailDao = database.emailDao()
+
+    @Provides
+    @Singleton
+    fun provideDraftDao(database: MailDatabase): DraftDao = database.draftDao()
 
     @Provides
     @Singleton

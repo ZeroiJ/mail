@@ -80,14 +80,16 @@ fun FloatingIsland(
     onArchive: () -> Unit = {},
     onStar: () -> Unit = {},
     onDelete: () -> Unit = {},
+    onCompose: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val actions = when (state) {
         FloatingIslandState.Idle -> listOf(
             FloatingIslandAction(
                 icon = Icons.Outlined.MailOutline,
-                label = "Inbox",
-                tint = PureWhite
+                label = "Compose",
+                tint = PureWhite,
+                onClick = onCompose
             )
         )
         FloatingIslandState.ThreadSelected -> listOf(
