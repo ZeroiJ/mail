@@ -39,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -164,12 +165,28 @@ fun TriageScreen(
             modifier = Modifier.fillMaxSize()
         )
 
-        // ── Top header (overlaid, translucent) ───────────────────────────
+        // ── Top fade scrim (content dissolves underneath, ChatGPT-style) ─
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
-                .background(OLEDBlack.copy(alpha = 0.85f))
+                .height(statusBarTop + 120.dp)
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            OLEDBlack,
+                            OLEDBlack.copy(alpha = 0.6f),
+                            Color.Transparent
+                        )
+                    )
+                )
+        )
+
+        // ── Top header (overlaid, fully transparent) ─────────────────────
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
                 .padding(top = statusBarTop)
         ) {
             TriageHeader(
@@ -222,15 +239,9 @@ private fun TriageHeader(
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = activeFilter?.uppercase() ?: "TRIAGE",
-                fontFamily = NDot,
-                fontSize = 28.sp,
-                color = PureWhite
-            )
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
