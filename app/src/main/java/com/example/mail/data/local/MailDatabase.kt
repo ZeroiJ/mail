@@ -42,16 +42,17 @@ abstract class MailDatabase : RoomDatabase() {
 
         /**
          * v3 -> v4: create `drafts` table for local compose drafts.
-         * Fresh table, no data to preserve.
+         * Fresh table, no data to preserve. Column names avoid SQLite
+         * reserved keywords (`to`/`cc`/`bcc` would crash the migration).
          */
         val MIGRATION_3_4 = object : Migration(3, 4) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(
                     "CREATE TABLE IF NOT EXISTS drafts (" +
                         "id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
-                        "to TEXT NOT NULL DEFAULT '', " +
-                        "cc TEXT NOT NULL DEFAULT '', " +
-                        "bcc TEXT NOT NULL DEFAULT '', " +
+                        "recipients_to TEXT NOT NULL DEFAULT '', " +
+                        "recipients_cc TEXT NOT NULL DEFAULT '', " +
+                        "recipients_bcc TEXT NOT NULL DEFAULT '', " +
                         "subject TEXT NOT NULL DEFAULT '', " +
                         "body TEXT NOT NULL DEFAULT '', " +
                         "serverDraftId TEXT, " +

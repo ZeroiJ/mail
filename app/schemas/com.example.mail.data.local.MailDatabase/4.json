@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 4,
-    "identityHash": "11e78cdbc7d4f2d427e44618367bd180",
+    "identityHash": "7c80d51e2a9614be8f9810861081bcff",
     "entities": [
       {
         "tableName": "email_messages",
@@ -98,7 +98,7 @@
       },
       {
         "tableName": "drafts",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `to` TEXT NOT NULL, `cc` TEXT NOT NULL, `bcc` TEXT NOT NULL, `subject` TEXT NOT NULL, `body` TEXT NOT NULL, `serverDraftId` TEXT, `updatedAt` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `recipients_to` TEXT NOT NULL, `recipients_cc` TEXT NOT NULL, `recipients_bcc` TEXT NOT NULL, `subject` TEXT NOT NULL, `body` TEXT NOT NULL, `serverDraftId` TEXT, `updatedAt` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -108,19 +108,19 @@
           },
           {
             "fieldPath": "to",
-            "columnName": "to",
+            "columnName": "recipients_to",
             "affinity": "TEXT",
             "notNull": true
           },
           {
             "fieldPath": "cc",
-            "columnName": "cc",
+            "columnName": "recipients_cc",
             "affinity": "TEXT",
             "notNull": true
           },
           {
             "fieldPath": "bcc",
-            "columnName": "bcc",
+            "columnName": "recipients_bcc",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -162,7 +162,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '11e78cdbc7d4f2d427e44618367bd180')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7c80d51e2a9614be8f9810861081bcff')"
     ]
   }
 }
