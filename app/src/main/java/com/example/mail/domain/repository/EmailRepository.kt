@@ -16,6 +16,8 @@ interface EmailRepository {
      */
     fun getPagedEmails(): Flow<PagingData<EmailMessage>>
 
+    fun getPagedEmailsByBundle(bundle: String): Flow<PagingData<EmailMessage>>
+
     fun getOtpEmailsFlow(): Flow<PagingData<EmailMessage>>
 
     /**

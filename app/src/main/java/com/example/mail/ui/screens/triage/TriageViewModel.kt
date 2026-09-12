@@ -6,11 +6,14 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.example.mail.data.local.EmailMessage
 import com.example.mail.domain.repository.EmailRepository
+import com.example.mail.util.BundleType
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -19,9 +22,15 @@ class TriageViewModel @Inject constructor(
     private val repository: EmailRepository
 ) : ViewModel() {
 
+    private val _bundleFilter = MutableStateFlow<String?>(null)
+    val bundleFilter: StateFlow<String?> = _bundleFilter.asStateFlow()
+
+    @OptIn(ExperimentalCoroutinesApi::class)
     val emails: Flow<PagingData<EmailMessage>> =
-        repository.getPagedEmails()
-            .cachedIn(viewModelScope)
+        _bundleFilter.flatMapLatest { bundle ->
+            if (bundle == null) repository.getPagedEmails()
+            else repository.getPagedEmailsByBundle(bundle)
+        }.cachedIn(viewModelScope)
 
     val otpEmails: Flow<PagingData<EmailMessage>> =
         repository.getOtpEmailsFlow()
@@ -84,6 +93,24 @@ class TriageViewModel @Inject constructor(
         viewModelScope.launch {
             repository.deleteExpiredOtps()
         }
+    }
+
+    fun cycleBundleFilter() {
+        val order = listOf(
+            null,
+            BundleType.RECEIPT.label,
+            BundleType.LOGISTICS.label,
+            BundleType.NEWSLETTER.label,
+            BundleType.SOCIAL.label,
+            BundleType.OTP.label,
+            BundleType.PERSONAL.label
+        )
+        val current = order.indexOf(_bundleFilter.value).coerceAtLeast(0)
+        _bundleFilter.value = order[(current + 1) % order.size]
+    }
+
+    fun clearBundleFilter() {
+        _bundleFilter.value = null
     }
 
     private companion object {

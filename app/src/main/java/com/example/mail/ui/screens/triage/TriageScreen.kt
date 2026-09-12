@@ -7,14 +7,17 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -41,6 +44,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -48,8 +52,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.example.mail.data.local.EmailMessage
-import com.example.mail.ui.components.FloatingIsland
-import com.example.mail.ui.components.FloatingIslandState
+import com.example.mail.ui.components.DockTab
+import com.example.mail.ui.components.NothingDock
 import com.example.mail.ui.components.OtpCard
 import com.example.mail.ui.theme.BorderGray
 import com.example.mail.ui.theme.Geist
@@ -79,7 +83,9 @@ private const val SWIPE_THRESHOLD = 120f
  *   swipe left  → delete (StarkRed feedback)
  *   swipe right → archive
  *
- * Top: OTP widget. Middle: paginated triage deck. Bottom: FloatingIsland.
+ * Edge-to-edge overlay layout: the deck scrolls full-screen behind a
+ * translucent top header and the bottom NothingDock, clearing both via
+ * LazyColumn contentPadding derived from WindowInsets.systemBars.
  */
 @Composable
 fun TriageScreen(
@@ -93,6 +99,7 @@ fun TriageScreen(
     val isSyncing by viewModel.isSyncing.collectAsState()
     val isLoadingMore by viewModel.isLoadingMore.collectAsState()
     val hasMore by viewModel.hasMore.collectAsState()
+    val bundleFilter by viewModel.bundleFilter.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.cleanupExpiredOtps()
@@ -100,35 +107,34 @@ fun TriageScreen(
     }
 
     val clipboardManager = LocalClipboardManager.current
-    val islandState = if (emailItems.itemCount > 0)
-        FloatingIslandState.ThreadSelected else FloatingIslandState.Idle
+    val density = LocalDensity.current
+    val statusBarTop = with(density) {
+        WindowInsets.statusBars.getTop(density).toDp()
+    }
+    val navBarBottom = with(density) {
+        WindowInsets.navigationBars.getBottom(density).toDp()
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(OLEDBlack)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-        ) {
-            // ── Header ──────────────────────────────────────────────────────
-            TriageHeader(
-                triageCount = emailItems.itemCount,
-                isSyncing = isSyncing,
-                onSync = { viewModel.sync() },
-                onSearchClick = onSearchClick,
-                onComposeClick = onComposeClick
-            )
-
-            // ── OTP Widget Section ──────────────────────────────────────────
-            if (otpItems.itemCount > 0) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                ) {
+        // ── Deck (full-screen, scrolls behind overlays) ──────────────────
+        TriageDeck(
+            emails = emailItems,
+            onEmailClick = onEmailClick,
+            onDelete = { viewModel.delete(it) },
+            onArchive = { viewModel.archive(it) },
+            hasMore = hasMore,
+            isLoadingMore = isLoadingMore,
+            onLoadMore = { viewModel.loadMore() },
+            contentPadding = PaddingValues(
+                top = statusBarTop + 88.dp,
+                bottom = navBarBottom + 108.dp
+            ),
+            otpHeader = {
+                if (otpItems.itemCount > 0) {
                     val firstOtp = otpItems[0]
                     if (firstOtp != null) {
                         val code = FallbackGenerator.extractOtp(
@@ -137,51 +143,60 @@ fun TriageScreen(
                         if (code.isNotEmpty()) {
                             val remainingMs = firstOtp.expiresAt - System.currentTimeMillis()
                             val remainingSec = (remainingMs / 1000).coerceAtLeast(0)
-                            OtpCard(
-                                sender = firstOtp.sender,
-                                otp = code.chunked(1).joinToString(" "),
-                                expiresInSeconds = remainingSec,
-                                tick = true,
-                                onCopy = { otpCode ->
-                                    clipboardManager.setText(AnnotatedString(otpCode))
-                                }
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                            ) {
+                                OtpCard(
+                                    sender = firstOtp.sender,
+                                    otp = code.chunked(1).joinToString(" "),
+                                    expiresInSeconds = remainingSec,
+                                    tick = true,
+                                    onCopy = { otpCode ->
+                                        clipboardManager.setText(AnnotatedString(otpCode))
+                                    }
+                                )
+                            }
                         }
                     }
                 }
-            }
+            },
+            modifier = Modifier.fillMaxSize()
+        )
 
-            // ── Triage Deck ─────────────────────────────────────────────────
-            TriageDeck(
-                emails = emailItems,
-                onEmailClick = onEmailClick,
-                onDelete = { viewModel.delete(it) },
-                onArchive = { viewModel.archive(it) },
-                hasMore = hasMore,
-                isLoadingMore = isLoadingMore,
-                onLoadMore = { viewModel.loadMore() },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .padding(top = 8.dp)
+        // ── Top header (overlaid, translucent) ───────────────────────────
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .background(OLEDBlack.copy(alpha = 0.85f))
+                .padding(top = statusBarTop)
+        ) {
+            TriageHeader(
+                triageCount = emailItems.itemCount,
+                isSyncing = isSyncing,
+                onSync = { viewModel.sync() },
+                onSearchClick = onSearchClick,
+                onComposeClick = onComposeClick,
+                activeFilter = bundleFilter,
+                onClearFilter = { viewModel.clearBundleFilter() }
             )
         }
 
-        // ── Bottom Floating Island (overlaid) ──────────────────────────────
+        // ── Bottom dock (overlaid, clears navigation bar) ────────────────
         Box(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(bottom = 8.dp),
-            contentAlignment = Alignment.BottomCenter
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .padding(bottom = navBarBottom + 12.dp),
+            contentAlignment = Alignment.Center
         ) {
-            val firstEmail = if (emailItems.itemCount > 0) emailItems[0] else null
-            FloatingIsland(
-                state = islandState,
-                onReply = { firstEmail?.let { onEmailClick(it.id) } },
-                onArchive = { firstEmail?.let { viewModel.archive(it.id) } },
-                onStar = { /* TODO: add star action */ },
-                onDelete = { firstEmail?.let { viewModel.delete(it.id) } },
-                onCompose = onComposeClick
+            NothingDock(
+                activeTab = if (bundleFilter == null) DockTab.INBOX else DockTab.BUNDLES,
+                onInbox = { viewModel.clearBundleFilter() },
+                onBundles = { viewModel.cycleBundleFilter() },
+                onSearch = onSearchClick
             )
         }
     }
@@ -197,42 +212,73 @@ private fun TriageHeader(
     isSyncing: Boolean,
     onSync: () -> Unit,
     onSearchClick: () -> Unit = {},
-    onComposeClick: () -> Unit = {}
+    onComposeClick: () -> Unit = {},
+    activeFilter: String? = null,
+    onClearFilter: () -> Unit = {}
 ) {
     val dateLabel = SimpleDateFormat("MMM d", Locale.US).format(Date())
 
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
-        Text(
-            text = "TRIAGE",
-            fontFamily = NDot,
-            fontSize = 28.sp,
-            color = PureWhite
-        )
         Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            ComposeButton(onCompose = onComposeClick)
-            SearchButton(onSearch = onSearchClick)
-            SyncButton(isSyncing = isSyncing, onSync = onSync)
             Text(
-                text = dateLabel.uppercase(),
+                text = activeFilter?.uppercase() ?: "TRIAGE",
                 fontFamily = NDot,
-                fontSize = 12.sp,
-                color = MutedGray
-            )
-            Text(
-                text = "$triageCount",
-                fontFamily = NDot,
-                fontSize = 14.sp,
+                fontSize = 28.sp,
                 color = PureWhite
             )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ComposeButton(onCompose = onComposeClick)
+                SearchButton(onSearch = onSearchClick)
+                SyncButton(isSyncing = isSyncing, onSync = onSync)
+                Text(
+                    text = dateLabel.uppercase(),
+                    fontFamily = NDot,
+                    fontSize = 12.sp,
+                    color = MutedGray
+                )
+                Text(
+                    text = "$triageCount",
+                    fontFamily = NDot,
+                    fontSize = 14.sp,
+                    color = PureWhite
+                )
+            }
+        }
+        if (activeFilter != null) {
+            Row(
+                modifier = Modifier
+                    .padding(top = 8.dp)
+                    .clip(RoundedCornerShape(50))
+                    .border(1.dp, BorderGray, RoundedCornerShape(50))
+                    .clickable(onClick = onClearFilter)
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "FILTER: ${activeFilter.uppercase()}",
+                    fontFamily = NDot,
+                    fontSize = 11.sp,
+                    color = PureWhite
+                )
+                Text(
+                    text = "✕",
+                    fontFamily = NDot,
+                    fontSize = 11.sp,
+                    color = MutedGray
+                )
+            }
         }
     }
 }
@@ -318,12 +364,18 @@ private fun TriageDeck(
     hasMore: Boolean,
     isLoadingMore: Boolean,
     onLoadMore: () -> Unit,
+    contentPadding: PaddingValues,
+    otpHeader: @Composable () -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
         modifier = modifier,
+        contentPadding = contentPadding,
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
+        item(key = "otp-header") {
+            otpHeader()
+        }
         items(
             count = emails.itemCount,
             key = { emails[it]?.id ?: "item-$it" }
@@ -508,7 +560,6 @@ private fun TriageScreenPreview() {
             modifier = Modifier
                 .fillMaxSize()
                 .background(OLEDBlack)
-                .statusBarsPadding()
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 TriageHeader(triageCount = 0, isSyncing = false, onSync = {})

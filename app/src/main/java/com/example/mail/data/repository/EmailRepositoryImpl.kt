@@ -58,6 +58,16 @@ class EmailRepositoryImpl @Inject constructor(
         ).flow
     }
 
+    override fun getPagedEmailsByBundle(bundle: String): Flow<PagingData<EmailMessage>> {
+        return Pager(
+            config = PagingConfig(
+                pageSize = 20,
+                enablePlaceholders = false
+            ),
+            pagingSourceFactory = { emailDao.getPagedEmailsByBundle(bundle, System.currentTimeMillis()) }
+        ).flow
+    }
+
     override fun getOtpEmailsFlow(): Flow<PagingData<EmailMessage>> {
         return Pager(
             config = PagingConfig(

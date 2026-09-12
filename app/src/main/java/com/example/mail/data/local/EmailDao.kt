@@ -33,6 +33,9 @@ interface EmailDao {
     @Query("SELECT * FROM email_messages WHERE (snoozedUntil = 0 OR snoozedUntil < :now) ORDER BY timestamp DESC")
     fun getPagedEmails(now: Long): PagingSource<Int, EmailMessage>
 
+    @Query("SELECT * FROM email_messages WHERE bundle_type = :bundle AND (snoozedUntil = 0 OR snoozedUntil < :now) ORDER BY timestamp DESC")
+    fun getPagedEmailsByBundle(bundle: String, now: Long): PagingSource<Int, EmailMessage>
+
     @Query("SELECT * FROM email_messages WHERE isOTP = 1 AND expiresAt > 0")
     fun getOtpEmailsPaged(): PagingSource<Int, EmailMessage>
 
