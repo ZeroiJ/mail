@@ -118,14 +118,19 @@ fun FloatingIsland(
                 .background(
                     brush = Brush.verticalGradient(
                         colors = listOf(
-                            SurfaceDarkElevated.copy(alpha = 0.55f),
-                            OLEDBlack.copy(alpha = 0.65f)
+                            Color(0xFF3A3A3C).copy(alpha = 0.78f),
+                            Color(0xFF1C1C1E).copy(alpha = 0.85f)
                         )
                     )
                 )
                 .border(
                     width = 1.dp,
-                    color = BorderGray,
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            PureWhite.copy(alpha = 0.22f),
+                            BorderGray.copy(alpha = 0.9f)
+                        )
+                    ),
                     shape = RoundedCornerShape(28.dp)
                 )
                 .padding(horizontal = 12.dp, vertical = 10.dp),
