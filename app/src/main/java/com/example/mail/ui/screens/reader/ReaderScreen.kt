@@ -188,16 +188,47 @@ private fun SandboxedHtmlView(
                 settings.loadWithOverviewMode = true
                 isVerticalScrollBarEnabled = false
                 isHorizontalScrollBarEnabled = false
-                webViewClient = android.webkit.WebViewClient()
+                webViewClient = object : android.webkit.WebViewClient() {
+                    override fun shouldOverrideUrlLoading(
+                        view: android.webkit.WebView?,
+                        request: android.webkit.WebResourceRequest?
+                    ): Boolean {
+                        val url = request?.url?.toString().orEmpty()
+                        if (url.startsWith("http://") || url.startsWith("https://")) {
+                            view?.context?.startActivity(
+                                android.content.Intent(
+                                    android.content.Intent.ACTION_VIEW,
+                                    android.net.Uri.parse(url)
+                                ).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                            )
+                            return true
+                        }
+                        return false
+                    }
+                }
             }
         },
         update = { webView ->
             if (webView.tag != html) {
                 webView.tag = html
-                webView.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null)
+                webView.loadDataWithBaseURL(null, mobileWrap(html), "text/html", "UTF-8", null)
             }
         }
     )
+}
+
+private fun mobileWrap(html: String): String {
+    val viewport = "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
+    val style = "<style>" +
+        "img{max-width:100%!important;height:auto!important}" +
+        "table{max-width:100%!important}" +
+        "body{margin:0;padding:8px;word-wrap:break-word}" +
+        "</style>"
+    val headIndex = html.indexOf("<head", ignoreCase = true)
+    if (headIndex < 0) return viewport + style + html
+    val headClose = html.indexOf('>', headIndex)
+    if (headClose < 0) return viewport + style + html
+    return html.substring(0, headClose + 1) + viewport + style + html.substring(headClose + 1)
 }
 
 @Composable
