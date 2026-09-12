@@ -81,7 +81,9 @@ interface EmailRepository {
         cc: String,
         bcc: String,
         subject: String,
-        body: String
+        body: String,
+        inReplyTo: String = "",
+        references: String = ""
     ): String?
 
     /** All local drafts, newest first. */

@@ -80,10 +80,24 @@ class MainActivity : AppCompatActivity() {
                                 }
                             )
                         }
-                        composable("compose") {
+                        composable(
+                            route = "compose?replyTo={replyTo}&mode={mode}",
+                            arguments = listOf(
+                                navArgument("replyTo") {
+                                    type = NavType.StringType
+                                    defaultValue = ""
+                                },
+                                navArgument("mode") {
+                                    type = NavType.StringType
+                                    defaultValue = ""
+                                }
+                            )
+                        ) { backStackEntry ->
                             ComposeScreen(
                                 onBack = { navController.popBackStack() },
-                                onSent = { navController.popBackStack() }
+                                onSent = { navController.popBackStack() },
+                                replyTo = backStackEntry.arguments?.getString("replyTo").orEmpty(),
+                                mode = backStackEntry.arguments?.getString("mode").orEmpty()
                             )
                         }
                         composable("search") {
@@ -99,8 +113,14 @@ class MainActivity : AppCompatActivity() {
                             arguments = listOf(
                                 navArgument("emailId") { type = NavType.StringType }
                             )
-                        ) {
-                            ReaderScreen(onBack = { navController.popBackStack() })
+                        ) { backStackEntry ->
+                            val emailId = backStackEntry.arguments?.getString("emailId").orEmpty()
+                            ReaderScreen(
+                                onBack = { navController.popBackStack() },
+                                onReply = { mode ->
+                                    navController.navigate("compose?replyTo=$emailId&mode=$mode")
+                                }
+                            )
                         }
                     }
                 } else {

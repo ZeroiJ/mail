@@ -23,7 +23,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Refresh
-import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -177,7 +176,6 @@ fun TriageScreen(
                 triageCount = emailItems.itemCount,
                 isSyncing = isSyncing,
                 onSync = { viewModel.sync() },
-                onSearchClick = onSearchClick,
                 onComposeClick = onComposeClick,
                 activeFilter = bundleFilter,
                 onClearFilter = { viewModel.clearBundleFilter() }
@@ -211,7 +209,6 @@ private fun TriageHeader(
     triageCount: Int,
     isSyncing: Boolean,
     onSync: () -> Unit,
-    onSearchClick: () -> Unit = {},
     onComposeClick: () -> Unit = {},
     activeFilter: String? = null,
     onClearFilter: () -> Unit = {}
@@ -239,7 +236,6 @@ private fun TriageHeader(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 ComposeButton(onCompose = onComposeClick)
-                SearchButton(onSearch = onSearchClick)
                 SyncButton(isSyncing = isSyncing, onSync = onSync)
                 Text(
                     text = dateLabel.uppercase(),
@@ -297,25 +293,6 @@ private fun ComposeButton(onCompose: () -> Unit) {
             imageVector = Icons.Outlined.Edit,
             contentDescription = "Compose",
             tint = OLEDBlack,
-            modifier = Modifier.size(14.dp)
-        )
-    }
-}
-
-@Composable
-private fun SearchButton(onSearch: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(50))
-            .border(1.dp, BorderGray, RoundedCornerShape(50))
-            .clickable(onClick = onSearch)
-            .padding(horizontal = 10.dp, vertical = 6.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(
-            imageVector = Icons.Outlined.Search,
-            contentDescription = "Search",
-            tint = MutedGray,
             modifier = Modifier.size(14.dp)
         )
     }

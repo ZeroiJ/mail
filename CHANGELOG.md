@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Reply / Reply All / Forward (v1):** `EmailMessage` stores `rfcMessageId`, `headerReferences`, `toRecipients`, `ccRecipients` (DB v4→v5). Reader has REPLY / REPLY ALL / FORWARD pills routing to `compose?replyTo=&mode=`; `ComposeViewModel.prepareReply` prefills recipients, `Re:`/`Fwd:` subjects, `> ` quoted body, and `In-Reply-To` + `References` threading headers. Reply All merges To/Cc minus your own address.
+
+### Changed
+- **Header search button removed:** search lives in the bottom dock now; header keeps compose + sync.
+
+### Added
 - **Compose (v1):** `repository.sendEmail()` builds an RFC822 plain-text payload (RFC2047-encoded subject) and posts via `messages.send`. `ComposeScreen` with To/CC (collapsible CC/BCC) / subject / body, SEND pill (disabled until To is filled, spinner while sending, error banner on failure) + SAVE DRAFT pill backed by a new `drafts` Room table (MailDatabase v3→v4). Entry via header compose button and FloatingIsland idle icon. Attachments, rich-text toolbar, auto-save, and signature deferred to fast-follow slices.
 
 ### Fixed

@@ -7,7 +7,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [EmailMessage::class, Draft::class],
-    version = 4,
+    version = 5,
     exportSchema = true
 )
 abstract class MailDatabase : RoomDatabase() {
@@ -58,6 +58,19 @@ abstract class MailDatabase : RoomDatabase() {
                         "serverDraftId TEXT, " +
                         "updatedAt INTEGER NOT NULL DEFAULT 0)"
                 )
+            }
+        }
+
+        /**
+         * v4 -> v5: add reply-threading headers to `email_messages`.
+         * All default to '' — old rows reply without threading headers.
+         */
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE email_messages ADD COLUMN rfcMessageId TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE email_messages ADD COLUMN headerReferences TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE email_messages ADD COLUMN toRecipients TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE email_messages ADD COLUMN ccRecipients TEXT NOT NULL DEFAULT ''")
             }
         }
     }

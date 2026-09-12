@@ -237,10 +237,12 @@ class EmailRepositoryImpl @Inject constructor(
         cc: String,
         bcc: String,
         subject: String,
-        body: String
+        body: String,
+        inReplyTo: String,
+        references: String
     ): String? = withContext(Dispatchers.IO) {
         runCatching {
-            val raw = buildRfc822(to, cc, bcc, subject, body)
+            val raw = buildRfc822(to, cc, bcc, subject, body, inReplyTo, references)
             val encoded = Base64.encodeToString(raw, Base64.URL_SAFE or Base64.NO_WRAP)
             gmailApi.sendMessage(request = SendMessageRequest(raw = encoded)).id
         }.getOrElse { e ->
@@ -264,7 +266,9 @@ class EmailRepositoryImpl @Inject constructor(
         cc: String,
         bcc: String,
         subject: String,
-        body: String
+        body: String,
+        inReplyTo: String = "",
+        references: String = ""
     ): ByteArray {
         val subjectB64 = Base64.encodeToString(
             subject.toByteArray(Charsets.UTF_8), Base64.NO_WRAP
@@ -274,6 +278,8 @@ class EmailRepositoryImpl @Inject constructor(
             if (cc.isNotBlank()) append("Cc: $cc\r\n")
             if (bcc.isNotBlank()) append("Bcc: $bcc\r\n")
             append("Subject: =?UTF-8?B?$subjectB64?=\r\n")
+            if (inReplyTo.isNotBlank()) append("In-Reply-To: $inReplyTo\r\n")
+            if (references.isNotBlank()) append("References: $references\r\n")
             append("Content-Type: text/plain; charset=UTF-8\r\n")
             append("Content-Transfer-Encoding: 8bit\r\n")
             append("\r\n")
@@ -321,7 +327,11 @@ class EmailRepositoryImpl @Inject constructor(
             bundleType = bundleType.label,
             timestamp = timestamp,
             isOTP = finalIsOtp,
-            expiresAt = if (finalIsOtp) otpExpiry else 0L
+            expiresAt = if (finalIsOtp) otpExpiry else 0L,
+            rfcMessageId = headers?.firstOrNull { it.name == "Message-ID" }?.value.orEmpty(),
+            headerReferences = headers?.firstOrNull { it.name == "References" }?.value.orEmpty(),
+            toRecipients = headers?.firstOrNull { it.name == "To" }?.value.orEmpty(),
+            ccRecipients = headers?.firstOrNull { it.name == "Cc" }?.value.orEmpty()
         )
     }
 

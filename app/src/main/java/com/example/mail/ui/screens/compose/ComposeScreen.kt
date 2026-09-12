@@ -49,8 +49,14 @@ import com.example.mail.ui.theme.StarkRed
 fun ComposeScreen(
     onBack: () -> Unit,
     onSent: () -> Unit,
+    replyTo: String = "",
+    mode: String = "",
     viewModel: ComposeViewModel = hiltViewModel()
 ) {
+    LaunchedEffect(replyTo, mode) {
+        viewModel.prepareReply(replyTo, mode)
+    }
+
     val to by viewModel.to.collectAsState()
     val cc by viewModel.cc.collectAsState()
     val bcc by viewModel.bcc.collectAsState()

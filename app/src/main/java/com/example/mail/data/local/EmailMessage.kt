@@ -21,5 +21,9 @@ data class EmailMessage(
     val timestamp: Long,
     val isOTP: Boolean = false, // Flags for ephemeral widget rendering
     val expiresAt: Long = 0L, // Timestamp for auto-deletion
-    val snoozedUntil: Long = 0L // Timestamp until which the message stays hidden from the deck (0 = not snoozed)
+    val snoozedUntil: Long = 0L, // Timestamp until which the message stays hidden from the deck (0 = not snoozed)
+    val rfcMessageId: String = "", // RFC Message-ID header, for reply threading
+    val headerReferences: String = "", // References header chain, for reply threading
+    val toRecipients: String = "", // To header, for Reply All
+    val ccRecipients: String = "" // Cc header, for Reply All
 )

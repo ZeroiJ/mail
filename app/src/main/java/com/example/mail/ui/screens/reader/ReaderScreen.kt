@@ -57,6 +57,7 @@ import com.example.mail.util.HtmlStripper
 @Composable
 fun ReaderScreen(
     onBack: () -> Unit,
+    onReply: (String) -> Unit = {},
     viewModel: ReaderViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
@@ -71,7 +72,7 @@ fun ReaderScreen(
         if (message == null) {
             missingState(onBack = onBack)
         } else {
-            readerContent(email = message, onBack = onBack)
+            readerContent(email = message, onBack = onBack, onReply = onReply)
         }
     }
 }
@@ -91,7 +92,8 @@ private fun missingState(onBack: () -> Unit) {
 @Composable
 private fun readerContent(
     email: EmailMessage,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onReply: (String) -> Unit
 ) {
     // Older rows may lack bodyMarkdown, so re-strip the HTML on the fly.
     val body = email.bodyMarkdown.ifBlank { HtmlStripper.strip(email.bodyHtml) }
@@ -110,6 +112,12 @@ private fun readerContent(
                 .fillMaxWidth()
                 .height(1.dp)
                 .background(BorderGray)
+        )
+
+        ReplyActionRow(
+            onReply = { onReply("reply") },
+            onReplyAll = { onReply("replyAll") },
+            onForward = { onReply("forward") }
         )
 
         Column(
@@ -229,6 +237,56 @@ private fun mobileWrap(html: String): String {
     val headClose = html.indexOf('>', headIndex)
     if (headClose < 0) return viewport + style + html
     return html.substring(0, headClose + 1) + viewport + style + html.substring(headClose + 1)
+}
+
+@Composable
+private fun ReplyActionRow(
+    onReply: () -> Unit,
+    onReplyAll: () -> Unit,
+    onForward: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        ReplyPill(label = "REPLY", primary = true, onClick = onReply)
+        ReplyPill(label = "REPLY ALL", primary = false, onClick = onReplyAll)
+        ReplyPill(label = "FORWARD", primary = false, onClick = onForward)
+    }
+}
+
+@Composable
+private fun ReplyPill(
+    label: String,
+    primary: Boolean,
+    onClick: () -> Unit
+) {
+    val pillModifier = if (primary) {
+        Modifier
+            .clip(RoundedCornerShape(50))
+            .background(PureWhite)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 18.dp, vertical = 10.dp)
+    } else {
+        Modifier
+            .clip(RoundedCornerShape(50))
+            .border(1.dp, BorderGray, RoundedCornerShape(50))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 18.dp, vertical = 10.dp)
+    }
+    Box(
+        modifier = pillModifier,
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = label,
+            fontFamily = NDot,
+            fontSize = 12.sp,
+            color = if (primary) OLEDBlack else PureWhite
+        )
+    }
 }
 
 @Composable

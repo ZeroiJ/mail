@@ -19,12 +19,12 @@ Living planning document. Check off items as they ship.
 - [ ] Signature prepend from settings (needs SettingsScreen first)
 - [ ] Auto-save draft on back press (every 30s or on text change) (fast-follow slice)
 
-### Reply / Reply All / Forward
-- [ ] Parse `In-Reply-To` and `References` headers from `MessageDetailDto`
-- [ ] Quote extraction: original sender/date/subject + `> ` prefixed body
-- [ ] Reply/Forward bottom sheet in `ReaderScreen`
-- [ ] `ReplyAll` includes original recipients in `To`/`Cc`
-- [ ] Forward attaches original email as `.eml` or inline
+### Reply / Reply All / Forward (v1)
+- [x] Parse `Message-ID`, `References`, `To`, `Cc` headers into `EmailMessage` (DB v4→v5)
+- [x] Quote extraction: sender/date + `> ` prefixed body; forward header block
+- [x] REPLY / REPLY ALL / FORWARD pills in `ReaderScreen` → `compose?replyTo=&mode=` route
+- [x] `ComposeViewModel.prepareReply`: To/Cc prefill, `Re:`/`Fwd:` subjects, `In-Reply-To` + `References` threading, self excluded from Reply All via AuthManager
+- [ ] Forward attaches original email as `.eml` (fast-follow; inline block for now)
 
 ### Label Management
 - [ ] `GET /gmail/v1/users/me/labels` endpoint
@@ -164,10 +164,11 @@ Living planning document. Check off items as they ship.
 
 ### Room Migrations Needed
 - **v3→v4**: Add `drafts` table (compose local drafts) — SHIPPED
-- **v4→v5**: Add `isRead` to `EmailMessage` (conversation view)
-- **v5→v6**: Add `Label`, `EmailLabelCrossRef` tables (label management)
-- **v6→v7**: Add `GmailAccount` table (multi-account)
-- **v7→v8**: Add `Attachment` table (attachment management)
+- **v4→v5**: Add `rfcMessageId`, `headerReferences`, `toRecipients`, `ccRecipients` to `email_messages` (reply threading) — SHIPPED
+- **v5→v6**: Add `isRead` to `EmailMessage` (conversation view)
+- **v6→v7**: Add `Label`, `EmailLabelCrossRef` tables (label management)
+- **v7→v8**: Add `GmailAccount` table (multi-account)
+- **v8→v9**: Add `Attachment` table (attachment management)
 
 ### New Gmail API Endpoints Required
 | Endpoint | Phase | Purpose |
