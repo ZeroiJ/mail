@@ -115,23 +115,15 @@ fun FloatingIsland(
             modifier = Modifier
                 .widthIn(max = 320.dp)
                 .clip(RoundedCornerShape(28.dp))
+                // Nothing Gallery-style: opaque grey pill, no border.
+                // Blends by opacity rather than outline.
                 .background(
                     brush = Brush.verticalGradient(
                         colors = listOf(
-                            Color(0xFF3A3A3C).copy(alpha = 0.78f),
-                            Color(0xFF1C1C1E).copy(alpha = 0.85f)
+                            Color(0xFF4A5154).copy(alpha = 0.88f),
+                            Color(0xFF2E3336).copy(alpha = 0.90f)
                         )
                     )
-                )
-                .border(
-                    width = 1.dp,
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            PureWhite.copy(alpha = 0.22f),
-                            BorderGray.copy(alpha = 0.9f)
-                        )
-                    ),
-                    shape = RoundedCornerShape(28.dp)
                 )
                 .padding(horizontal = 12.dp, vertical = 10.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
