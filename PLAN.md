@@ -38,11 +38,11 @@ Living planning document. Check off items as they ship.
 - [ ] Label filter chips in search (fast-follow)
 
 ### Conversation View
-- [ ] Room query: `GROUP BY threadId` with `MAX(timestamp)` ordering
-- [ ] Add `isRead` field to `EmailMessage` entity (Room migration v3→v4)
-- [ ] Unread count badge per thread
-- [ ] Expand/collapse individual messages within a thread
-- [ ] Mark as read on open
+- [x] Room query: `GROUP BY threadId` with `MAX(timestamp)` ordering (correlated subquery — SQLite 3.18 on minSdk 26 has no window functions)
+- [x] Add `isRead` field to `EmailMessage` entity (Room migration v6→v7 + `threadId` index)
+- [x] Unread count badge per thread
+- [x] Expand/collapse individual messages within a thread
+- [x] Mark as read on open (local + one `threads.modify` server call)
 
 ### Search (basic v1 — full operator UI later)
 - [x] `searchEmails(query)` in repository (network → upsert Room → return list)
@@ -166,8 +166,8 @@ Living planning document. Check off items as they ship.
 ### Room Migrations Needed
 - **v3→v4**: Add `drafts` table (compose local drafts) — SHIPPED
 - **v4→v5**: Add `rfcMessageId`, `headerReferences`, `toRecipients`, `ccRecipients` to `email_messages` (reply threading) — SHIPPED
-- **v5→v6**: Add `isRead` to `EmailMessage` (conversation view)
-- **v6→v7**: Add `Label`, `EmailLabelCrossRef` tables (label management)
+- **v5→v6**: Add `Label`, `EmailLabelCrossRef` tables (label management) — SHIPPED
+- **v6→v7**: Add `isRead` to `EmailMessage` + `threadId` index (conversation view) — SHIPPED
 - **v7→v8**: Add `GmailAccount` table (multi-account)
 - **v8→v9**: Add `Attachment` table (attachment management)
 
@@ -183,6 +183,7 @@ Living planning document. Check off items as they ship.
 | `POST /labels` | 1 | Create label |
 | `PUT /labels/{id}` | 1 | Modify label |
 | `DELETE /labels/{id}` | 1 | Delete label |
+| `POST /threads/{id}/modify` | 1 | Mark thread read / archive-delete conversation (`removeLabelIds`/`addLabelIds`) |
 | `GET /messages/{id}/attachments/{attId}` | 3 | Download attachment |
 | `PUT /settings/update` | 2 | Vacation responder |
 

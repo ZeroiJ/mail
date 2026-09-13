@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Conversation View:** inbox deck now groups emails by Gmail thread (`GROUP BY threadId` via correlated `MAX(timestamp)` subquery — no window functions on minSdk 26's SQLite 3.18). Each deck row is the newest message per thread with a per-thread **unread count badge** (red-bordered N-Dot pill, white sender for unread threads). Swipe actions operate on the whole thread (`threads.modify`: archive removes `INBOX`, delete adds `TRASH`). `EmailMessage` gained `isRead` (DB v6→v7 migration + `threadId` index) synced from the `UNREAD` label. Opening the reader marks the thread read locally + on the server (one `POST /threads/{id}/modify` call, skipped when already read). Reader shows a expandable `THREAD · N` section under the message body — tapping a sibling expands it and collapses the prior focused message; reply/labels target the expanded message. Version bumped to 1.2 (versionCode 3).
+
+### Added
 - **Label Management (v1):** `Label` entity + `EmailLabelCrossRef` many-to-many (DB v5→v6). `listLabels`/`createLabel`/`patchLabel`/`deleteLabel` endpoints with optimistic local apply + rollback on failure. `LabelManagerScreen` (`labels` route) for create/rename/delete with system labels read-only. Reader `LabelSection` shows applied chips (tap to remove) + ADD picker dialog with inline create and MANAGE link.
 
 ### Added
