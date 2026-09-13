@@ -22,9 +22,12 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,6 +49,9 @@ import com.example.mail.ui.theme.OLEDBlack
 import com.example.mail.ui.theme.PureWhite
 import com.example.mail.util.FallbackGenerator
 import com.example.mail.util.HtmlStripper
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /**
  * Reader / detail view bound to the local Room flow. Renders the raw HTML
@@ -53,16 +59,31 @@ import com.example.mail.util.HtmlStripper
  * AGENTS.md payload sandboxing rule) with tracking pixels already stripped
  * at sync time. Pins extracted OTPs and actionable data on top.
  * Never waits on the network.
+ *
+ * Conversation mode: the whole thread loads beneath the opened message;
+ * tapping a collapsed sibling expands it in place while the previous
+ * message collapses back into the list. Opening the reader marks the
+ * thread read (local + one `threads.modify` server call).
  */
 @Composable
 fun ReaderScreen(
     onBack: () -> Unit,
-    onReply: (String) -> Unit = {},
+    onReply: (String, String) -> Unit = { _, _ -> },
     onManageLabels: () -> Unit = {},
     viewModel: ReaderViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
     val email by viewModel.email.collectAsState()
+    val thread by viewModel.thread.collectAsState()
+    var focusedId by remember(email?.id) { mutableStateOf(email?.id) }
+
+    LaunchedEffect(email?.id) {
+        focusedId = email?.id
+    }
+
+    LaunchedEffect(email?.threadId) {
+        email?.threadId?.let(viewModel::markThreadRead)
+    }
 
     Box(
         modifier = modifier
@@ -73,7 +94,15 @@ fun ReaderScreen(
         if (message == null) {
             missingState(onBack = onBack)
         } else {
-            readerContent(email = message, onBack = onBack, onReply = onReply, onManageLabels = onManageLabels)
+            readerContent(
+                email = message,
+                thread = thread,
+                focusedId = focusedId,
+                onFocusMessage = { focusedId = it },
+                onBack = onBack,
+                onReply = onReply,
+                onManageLabels = onManageLabels
+            )
         }
     }
 }
@@ -93,12 +122,17 @@ private fun missingState(onBack: () -> Unit) {
 @Composable
 private fun readerContent(
     email: EmailMessage,
+    thread: List<EmailMessage>,
+    focusedId: String?,
+    onFocusMessage: (String) -> Unit,
     onBack: () -> Unit,
-    onReply: (String) -> Unit,
+    onReply: (String, String) -> Unit,
     onManageLabels: () -> Unit
 ) {
-    // Older rows may lack bodyMarkdown, so re-strip the HTML on the fly.
-    val body = email.bodyMarkdown.ifBlank { HtmlStripper.strip(email.bodyHtml) }
+    // The expanded message: the one the user tapped, or the opened email
+    // while the thread is still loading.
+    val focused = thread.firstOrNull { it.id == focusedId } ?: email
+    val body = focused.bodyMarkdown.ifBlank { HtmlStripper.strip(focused.bodyHtml) }
     val clipboardManager = LocalClipboardManager.current
 
     Column(
@@ -107,7 +141,7 @@ private fun readerContent(
             .background(OLEDBlack)
             .statusBarsPadding()
     ) {
-        readerHeader(sender = email.sender, subject = email.subject, onBack = onBack)
+        readerHeader(sender = focused.sender, subject = focused.subject, onBack = onBack)
 
         Box(
             modifier = Modifier
@@ -117,13 +151,13 @@ private fun readerContent(
         )
 
         ReplyActionRow(
-            onReply = { onReply("reply") },
-            onReplyAll = { onReply("replyAll") },
-            onForward = { onReply("forward") }
+            onReply = { onReply(focused.id, "reply") },
+            onReplyAll = { onReply(focused.id, "replyAll") },
+            onForward = { onReply(focused.id, "forward") }
         )
 
         LabelSection(
-            messageId = email.id,
+            messageId = focused.id,
             onManageLabels = onManageLabels
         )
 
@@ -133,14 +167,14 @@ private fun readerContent(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp)
         ) {
-            if (email.isOTP) {
+            if (focused.isOTP) {
                 val code = FallbackGenerator.extractOtp(body)
                 if (code.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(16.dp))
                     val expiresInSeconds =
-                        ((email.expiresAt - System.currentTimeMillis()) / 1000).coerceAtLeast(0)
+                        ((focused.expiresAt - System.currentTimeMillis()) / 1000).coerceAtLeast(0)
                     OtpCard(
-                        sender = email.sender,
+                        sender = focused.sender,
                         otp = code.chunked(1).joinToString(" "),
                         expiresInSeconds = expiresInSeconds,
                         tick = true,
@@ -174,12 +208,109 @@ private fun readerContent(
 
             Spacer(modifier = Modifier.height(20.dp))
             SandboxedHtmlView(
-                html = email.bodyHtml.ifBlank { email.bodyMarkdown },
+                html = focused.bodyHtml.ifBlank { focused.bodyMarkdown },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 32.dp)
             )
+
+            // ── Conversation: collapsed siblings, expandable on tap ────────
+            if (thread.size > 1) {
+                ThreadSection(
+                    messages = thread,
+                    expandedId = focused.id,
+                    onExpand = onFocusMessage
+                )
+            }
         }
+    }
+}
+
+@Composable
+private fun ThreadSection(
+    messages: List<EmailMessage>,
+    expandedId: String,
+    onExpand: (String) -> Unit
+) {
+    Spacer(modifier = Modifier.height(8.dp))
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(1.dp)
+                .background(BorderGray)
+        )
+        Text(
+            text = "THREAD · ${messages.size}",
+            fontFamily = NDot,
+            fontSize = 11.sp,
+            color = MutedGray,
+            modifier = Modifier.padding(horizontal = 12.dp)
+        )
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(1.dp)
+                .background(BorderGray)
+        )
+    }
+
+    messages.filter { it.id != expandedId }.forEach { sibling ->
+        Spacer(modifier = Modifier.height(8.dp))
+        ThreadMessageCard(
+            message = sibling,
+            onExpand = { onExpand(sibling.id) }
+        )
+    }
+    Spacer(modifier = Modifier.height(32.dp))
+}
+
+@Composable
+private fun ThreadMessageCard(
+    message: EmailMessage,
+    onExpand: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .border(
+                width = 1.dp,
+                color = if (message.isRead) BorderGray else PureWhite,
+                shape = RoundedCornerShape(12.dp)
+            )
+            .clickable(onClick = onExpand)
+            .padding(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = message.sender,
+                fontFamily = NDot,
+                fontSize = 12.sp,
+                color = if (message.isRead) MutedGray else PureWhite,
+                maxLines = 1
+            )
+            Text(
+                text = message.subject,
+                fontFamily = NDot,
+                fontSize = 13.sp,
+                color = PureWhite,
+                maxLines = 1
+            )
+        }
+        Text(
+            text = SimpleDateFormat("MMM d, h:mm a", Locale.US).format(
+                Date(message.timestamp * 1000)
+            ),
+            fontFamily = NDot,
+            fontSize = 10.sp,
+            color = MutedGray
+        )
     }
 }
 

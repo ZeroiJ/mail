@@ -118,8 +118,8 @@ class MainActivity : AppCompatActivity() {
                             val emailId = backStackEntry.arguments?.getString("emailId").orEmpty()
                             ReaderScreen(
                                 onBack = { navController.popBackStack() },
-                                onReply = { mode ->
-                                    navController.navigate("compose?replyTo=$emailId&mode=$mode")
+                                onReply = { messageId, mode ->
+                                    navController.navigate("compose?replyTo=$messageId&mode=$mode")
                                 },
                                 onManageLabels = {
                                     navController.navigate("labels")
