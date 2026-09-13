@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -165,7 +166,9 @@ private fun LabelPickerDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 LazyColumn(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 280.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     items(labels, key = { it.id }) { label ->
