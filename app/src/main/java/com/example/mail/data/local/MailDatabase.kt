@@ -7,7 +7,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [EmailMessage::class, Draft::class, Label::class, EmailLabelCrossRef::class],
-    version = 6,
+    version = 7,
     exportSchema = true
 )
 abstract class MailDatabase : RoomDatabase() {
@@ -95,6 +95,18 @@ abstract class MailDatabase : RoomDatabase() {
                         "labelId TEXT NOT NULL, " +
                         "PRIMARY KEY (messageId, labelId))"
                 )
+            }
+        }
+
+        /**
+         * v6 -> v7: add `isRead` (unread state synced from the Gmail UNREAD
+         * label) and index `threadId` for the conversation grouping query.
+         * Existing rows default to read (1).
+         */
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE email_messages ADD COLUMN isRead INTEGER NOT NULL DEFAULT 1")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_email_messages_threadId ON email_messages(threadId)")
             }
         }
     }

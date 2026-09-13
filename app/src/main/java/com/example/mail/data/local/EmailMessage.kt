@@ -2,10 +2,14 @@ package com.example.mail.data.local
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.example.mail.util.BundleType
 
-@Entity(tableName = "email_messages")
+@Entity(
+    tableName = "email_messages",
+    indices = [Index(value = ["threadId"])]
+)
 data class EmailMessage(
     @PrimaryKey
     val id: String, // Gmail Message ID
@@ -22,6 +26,7 @@ data class EmailMessage(
     val isOTP: Boolean = false, // Flags for ephemeral widget rendering
     val expiresAt: Long = 0L, // Timestamp for auto-deletion
     val snoozedUntil: Long = 0L, // Timestamp until which the message stays hidden from the deck (0 = not snoozed)
+    val isRead: Boolean = true, // Unread state, synced from the Gmail UNREAD label
     val rfcMessageId: String = "", // RFC Message-ID header, for reply threading
     val headerReferences: String = "", // References header chain, for reply threading
     val toRecipients: String = "", // To header, for Reply All

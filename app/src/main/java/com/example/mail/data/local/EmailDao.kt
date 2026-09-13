@@ -27,6 +27,9 @@ interface EmailDao {
     @Query("DELETE FROM email_messages WHERE id = :emailId")
     suspend fun deleteEmailById(emailId: String)
 
+    @Query("DELETE FROM email_messages WHERE threadId = :threadId")
+    suspend fun deleteThread(threadId: String)
+
     @Query("SELECT * FROM email_messages WHERE id = :emailId")
     fun getEmailById(emailId: String): Flow<EmailMessage?>
 
@@ -35,6 +38,59 @@ interface EmailDao {
 
     @Query("SELECT * FROM email_messages WHERE bundle_type = :bundle AND (snoozedUntil = 0 OR snoozedUntil < :now) ORDER BY timestamp DESC")
     fun getPagedEmailsByBundle(bundle: String, now: Long): PagingSource<Int, EmailMessage>
+
+    /**
+     * Conversation deck: one row per thread (the newest non-snoozed message),
+     * ordered by recency, with the number of unread messages in each thread.
+     * Uses a correlated subquery instead of window functions because SQLite
+     * on minSdk 26 (3.18) predates ROW_NUMBER() OVER.
+     */
+    @Query(
+        """
+        SELECT e.*, COALESCE(u.unreadCount, 0) AS unreadCount
+        FROM email_messages e
+        LEFT JOIN (
+            SELECT threadId, COUNT(*) AS unreadCount FROM email_messages WHERE isRead = 0 GROUP BY threadId
+        ) u ON u.threadId = e.threadId
+        WHERE e.timestamp = (
+            SELECT MAX(timestamp) FROM email_messages m
+            WHERE m.threadId = e.threadId AND (m.snoozedUntil = 0 OR m.snoozedUntil < :now)
+        )
+        AND (e.snoozedUntil = 0 OR e.snoozedUntil < :now)
+        ORDER BY e.timestamp DESC
+        """
+    )
+    fun getConversations(now: Long): PagingSource<Int, ConversationItem>
+
+    @Query(
+        """
+        SELECT e.*, COALESCE(u.unreadCount, 0) AS unreadCount
+        FROM email_messages e
+        LEFT JOIN (
+            SELECT threadId, COUNT(*) AS unreadCount FROM email_messages WHERE isRead = 0 GROUP BY threadId
+        ) u ON u.threadId = e.threadId
+        WHERE e.timestamp = (
+            SELECT MAX(timestamp) FROM email_messages m
+            WHERE m.threadId = e.threadId AND m.bundle_type = :bundle
+                AND (m.snoozedUntil = 0 OR m.snoozedUntil < :now)
+        )
+        AND e.bundle_type = :bundle
+        AND (e.snoozedUntil = 0 OR e.snoozedUntil < :now)
+        ORDER BY e.timestamp DESC
+        """
+    )
+    fun getConversationsByBundle(bundle: String, now: Long): PagingSource<Int, ConversationItem>
+
+    /** All messages in a thread, oldest first — powers the expandable reader. */
+    @Query("SELECT * FROM email_messages WHERE threadId = :threadId ORDER BY timestamp ASC")
+    fun observeThread(threadId: String): Flow<List<EmailMessage>>
+
+    /** Mark every message in a thread read (local, optimistic). */
+    @Query("UPDATE email_messages SET isRead = 1 WHERE threadId = :threadId")
+    suspend fun markThreadRead(threadId: String)
+
+    @Query("SELECT COUNT(*) FROM email_messages WHERE threadId = :threadId AND isRead = 0")
+    suspend fun countUnreadInThread(threadId: String): Int
 
     @Query("SELECT * FROM email_messages WHERE isOTP = 1 AND expiresAt > 0")
     fun getOtpEmailsPaged(): PagingSource<Int, EmailMessage>

@@ -36,7 +36,8 @@ object DatabaseModule {
                 MailDatabase.MIGRATION_2_3,
                 MailDatabase.MIGRATION_3_4,
                 MailDatabase.MIGRATION_4_5,
-                MailDatabase.MIGRATION_5_6
+                MailDatabase.MIGRATION_5_6,
+                MailDatabase.MIGRATION_6_7
             )
             .build()
     }
