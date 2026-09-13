@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import com.example.mail.data.local.ConversationItem
 import com.example.mail.data.local.EmailMessage
 import com.example.mail.domain.repository.EmailRepository
 import com.example.mail.util.BundleType
@@ -26,10 +27,10 @@ class TriageViewModel @Inject constructor(
     val bundleFilter: StateFlow<String?> = _bundleFilter.asStateFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val emails: Flow<PagingData<EmailMessage>> =
+    val conversations: Flow<PagingData<ConversationItem>> =
         _bundleFilter.flatMapLatest { bundle ->
-            if (bundle == null) repository.getPagedEmails()
-            else repository.getPagedEmailsByBundle(bundle)
+            if (bundle == null) repository.getConversations()
+            else repository.getConversationsByBundle(bundle)
         }.cachedIn(viewModelScope)
 
     val otpEmails: Flow<PagingData<EmailMessage>> =
@@ -75,12 +76,12 @@ class TriageViewModel @Inject constructor(
         }
     }
 
-    fun delete(id: String) {
-        viewModelScope.launch { repository.deleteEmail(id) }
+    fun delete(threadId: String) {
+        viewModelScope.launch { repository.deleteConversation(threadId) }
     }
 
-    fun archive(id: String) {
-        viewModelScope.launch { repository.archiveEmail(id) }
+    fun archive(threadId: String) {
+        viewModelScope.launch { repository.archiveConversation(threadId) }
     }
 
     fun snooze(id: String) {

@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.example.mail.data.local.ConversationItem
 import com.example.mail.data.local.EmailMessage
 import com.example.mail.ui.components.DockTab
 import com.example.mail.ui.components.NothingDock
@@ -94,7 +95,7 @@ fun TriageScreen(
     onSearchClick: () -> Unit = {},
     onComposeClick: () -> Unit = {}
 ) {
-    val emailItems = viewModel.emails.collectAsLazyPagingItems()
+    val conversationItems = viewModel.conversations.collectAsLazyPagingItems()
     val otpItems = viewModel.otpEmails.collectAsLazyPagingItems()
     val isSyncing by viewModel.isSyncing.collectAsState()
     val isLoadingMore by viewModel.isLoadingMore.collectAsState()
@@ -122,7 +123,7 @@ fun TriageScreen(
     ) {
         // ── Deck (full-screen, scrolls behind overlays) ──────────────────
         TriageDeck(
-            emails = emailItems,
+            conversations = conversationItems,
             onEmailClick = onEmailClick,
             onDelete = { viewModel.delete(it) },
             onArchive = { viewModel.archive(it) },
@@ -190,7 +191,7 @@ fun TriageScreen(
                 .padding(top = statusBarTop)
         ) {
             TriageHeader(
-                triageCount = emailItems.itemCount,
+                triageCount = conversationItems.itemCount,
                 isSyncing = isSyncing,
                 onSync = { viewModel.sync() },
                 onComposeClick = onComposeClick,
@@ -345,7 +346,7 @@ private fun SyncButton(
 
 @Composable
 private fun TriageDeck(
-    emails: androidx.paging.compose.LazyPagingItems<EmailMessage>,
+    conversations: androidx.paging.compose.LazyPagingItems<ConversationItem>,
     onEmailClick: (String) -> Unit,
     onDelete: (String) -> Unit,
     onArchive: (String) -> Unit,
@@ -365,15 +366,16 @@ private fun TriageDeck(
             otpHeader()
         }
         items(
-            count = emails.itemCount,
-            key = { emails[it]?.id ?: "item-$it" }
+            count = conversations.itemCount,
+            key = { conversations[it]?.message?.id ?: "item-$it" }
         ) { index ->
-            val email = emails[index] ?: return@items
+            val item = conversations[index] ?: return@items
             SwipeableEmailCard(
-                email = email,
-                onOpen = { onEmailClick(email.id) },
-                onDelete = { onDelete(email.id) },
-                onArchive = { onArchive(email.id) }
+                email = item.message,
+                unreadCount = item.unreadCount,
+                onOpen = { onEmailClick(item.message.id) },
+                onDelete = { onDelete(item.message.threadId) },
+                onArchive = { onArchive(item.message.threadId) }
             )
         }
         if (hasMore) {
@@ -426,6 +428,7 @@ private fun LoadMoreButton(
 @Composable
 private fun SwipeableEmailCard(
     email: EmailMessage,
+    unreadCount: Int = 0,
     onOpen: () -> Unit,
     onDelete: () -> Unit,
     onArchive: () -> Unit
@@ -506,12 +509,33 @@ private fun SwipeableEmailCard(
                 }
 
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = email.sender,
-                        fontFamily = NDot,
-                        fontSize = 13.sp,
-                        color = PureWhite
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = email.sender,
+                            fontFamily = NDot,
+                            fontSize = 13.sp,
+                            color = if (unreadCount > 0) PureWhite else MutedGray,
+                            maxLines = 1,
+                            modifier = Modifier.weight(1f)
+                        )
+                        if (unreadCount > 0) {
+                            Text(
+                                text = "$unreadCount",
+                                fontFamily = NDot,
+                                fontSize = 11.sp,
+                                color = PureWhite,
+                                modifier = Modifier
+                                    .padding(start = 8.dp)
+                                    .clip(RoundedCornerShape(50))
+                                    .border(1.dp, BorderGray, RoundedCornerShape(50))
+                                    .padding(horizontal = 7.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = email.subject,
