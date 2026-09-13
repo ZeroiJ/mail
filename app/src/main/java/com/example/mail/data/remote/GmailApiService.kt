@@ -73,6 +73,24 @@ interface GmailApiService {
     ): MessageDetailDto
 
     /**
+     * Modify a thread's labels. Backed by
+     * `POST /gmail/v1/users/{userId}/threads/{id}/modify`.
+     *
+     * Used to mark an entire conversation read in one call
+     * (`removeLabelIds = ["UNREAD"]`).
+     *
+     * @param userId Gmail user id to scope the query to ("me" by default)
+     * @param id     Gmail Thread ID (not Message ID)
+     * @param request labels to add/remove (e.g. UNREAD)
+     */
+    @POST("gmail/v1/users/{userId}/threads/{id}/modify")
+    suspend fun modifyThread(
+        @Path("userId") userId: String = "me",
+        @Path("id") id: String,
+        @Body request: ModifyMessageRequest
+    )
+
+    /**
      * Send an email. Backed by `POST /gmail/v1/users/{userId}/messages/send`.
      *
      * @param request base64url-encoded RFC822 message in `raw`.

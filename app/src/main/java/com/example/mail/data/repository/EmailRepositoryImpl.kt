@@ -9,6 +9,7 @@ import com.example.mail.data.local.Draft
 import com.example.mail.data.local.DraftDao
 import com.example.mail.data.local.EmailDao
 import com.example.mail.data.local.EmailMessage
+import com.example.mail.data.local.ConversationItem
 import com.example.mail.data.local.Label
 import com.example.mail.data.local.LabelDao
 import com.example.mail.data.local.EmailLabelCrossRef
@@ -74,6 +75,44 @@ class EmailRepositoryImpl @Inject constructor(
         ).flow
     }
 
+    override fun getConversations(): Flow<PagingData<ConversationItem>> {
+        return Pager(
+            config = PagingConfig(
+                pageSize = 20,
+                enablePlaceholders = false
+            ),
+            pagingSourceFactory = { emailDao.getConversations(System.currentTimeMillis()) }
+        ).flow
+    }
+
+    override fun getConversationsByBundle(bundle: String): Flow<PagingData<ConversationItem>> {
+        return Pager(
+            config = PagingConfig(
+                pageSize = 20,
+                enablePlaceholders = false
+            ),
+            pagingSourceFactory = { emailDao.getConversationsByBundle(bundle, System.currentTimeMillis()) }
+        ).flow
+    }
+
+    override fun observeThread(threadId: String): Flow<List<EmailMessage>> =
+        emailDao.observeThread(threadId)
+
+    override suspend fun markThreadRead(threadId: String) {
+        withContext(Dispatchers.IO) {
+            if (emailDao.countUnreadInThread(threadId) == 0) return@withContext
+            emailDao.markThreadRead(threadId)
+            runCatching {
+                gmailApi.modifyThread(
+                    id = threadId,
+                    request = ModifyMessageRequest(removeLabelIds = listOf("UNREAD"))
+                )
+            }.onFailure { e ->
+                Log.e(tag, "Mark-thread-read failed for $threadId: ${e.message}")
+            }
+        }
+    }
+
     override fun getOtpEmailsFlow(): Flow<PagingData<EmailMessage>> {
         return Pager(
             config = PagingConfig(
@@ -127,6 +166,37 @@ class EmailRepositoryImpl @Inject constructor(
                 )
             }.onFailure { e ->
                 Log.e(tag, "Snooze failed for $id: ${e.message}")
+            }
+        }
+    }
+
+    override suspend fun archiveConversation(threadId: String) {
+        withContext(Dispatchers.IO) {
+            emailDao.deleteThread(threadId)
+            runCatching {
+                gmailApi.modifyThread(
+                    id = threadId,
+                    request = ModifyMessageRequest(removeLabelIds = listOf("INBOX"))
+                )
+            }.onFailure { e ->
+                Log.e(tag, "Archive conversation failed for $threadId: ${e.message}")
+            }
+        }
+    }
+
+    override suspend fun deleteConversation(threadId: String) {
+        withContext(Dispatchers.IO) {
+            emailDao.deleteThread(threadId)
+            runCatching {
+                gmailApi.modifyThread(
+                    id = threadId,
+                    request = ModifyMessageRequest(
+                        addLabelIds = listOf("TRASH"),
+                        removeLabelIds = listOf("INBOX")
+                    )
+                )
+            }.onFailure { e ->
+                Log.e(tag, "Delete conversation failed for $threadId: ${e.message}")
             }
         }
     }
@@ -423,6 +493,7 @@ class EmailRepositoryImpl @Inject constructor(
             timestamp = timestamp,
             isOTP = finalIsOtp,
             expiresAt = if (finalIsOtp) otpExpiry else 0L,
+            isRead = !detail.labelIds.orEmpty().contains("UNREAD"),
             rfcMessageId = headers?.firstOrNull { it.name == "Message-ID" }?.value.orEmpty(),
             headerReferences = headers?.firstOrNull { it.name == "References" }?.value.orEmpty(),
             toRecipients = headers?.firstOrNull { it.name == "To" }?.value.orEmpty(),

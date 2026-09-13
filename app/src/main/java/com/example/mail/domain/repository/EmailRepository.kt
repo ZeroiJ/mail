@@ -1,6 +1,7 @@
 package com.example.mail.domain.repository
 
 import androidx.paging.PagingData
+import com.example.mail.data.local.ConversationItem
 import com.example.mail.data.local.EmailMessage
 import kotlinx.coroutines.flow.Flow
 
@@ -17,6 +18,26 @@ interface EmailRepository {
     fun getPagedEmails(): Flow<PagingData<EmailMessage>>
 
     fun getPagedEmailsByBundle(bundle: String): Flow<PagingData<EmailMessage>>
+
+    /**
+     * Conversation deck: one row per thread (newest message + unread count),
+     * ordered by recency. Powers the triage deck in conversation mode.
+     */
+    fun getConversations(): Flow<PagingData<ConversationItem>>
+
+    fun getConversationsByBundle(bundle: String): Flow<PagingData<ConversationItem>>
+
+    /**
+     * All messages in a thread, oldest first. Powers the expandable
+     * conversation view in the reader.
+     */
+    fun observeThread(threadId: String): Flow<List<EmailMessage>>
+
+    /**
+     * Mark an entire thread read: optimistic local update, then remove the
+     * UNREAD label server-side via `threads.modify` (one call per thread).
+     */
+    suspend fun markThreadRead(threadId: String)
 
     fun getOtpEmailsFlow(): Flow<PagingData<EmailMessage>>
 
@@ -37,6 +58,19 @@ interface EmailRepository {
      * move it to TRASH on the server.
      */
     suspend fun deleteEmail(id: String)
+
+    /**
+     * Archive an entire conversation: remove the INBOX label from every
+     * message server-side via `threads.modify`, and drop the whole thread
+     * from the local deck.
+     */
+    suspend fun archiveConversation(threadId: String)
+
+    /**
+     * Delete an entire conversation: TRASH server-side via `threads.modify`,
+     * and drop the whole thread from the local deck.
+     */
+    suspend fun deleteConversation(threadId: String)
 
     /**
      * Snooze a message: remove the INBOX label on the server and hide it from
