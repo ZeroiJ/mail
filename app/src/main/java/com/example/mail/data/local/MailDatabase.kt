@@ -6,8 +6,8 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
-    entities = [EmailMessage::class, Draft::class],
-    version = 5,
+    entities = [EmailMessage::class, Draft::class, Label::class, EmailLabelCrossRef::class],
+    version = 6,
     exportSchema = true
 )
 abstract class MailDatabase : RoomDatabase() {
@@ -15,6 +15,8 @@ abstract class MailDatabase : RoomDatabase() {
     abstract fun emailDao(): EmailDao
 
     abstract fun draftDao(): DraftDao
+
+    abstract fun labelDao(): LabelDao
 
     companion object {
 
@@ -71,6 +73,28 @@ abstract class MailDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE email_messages ADD COLUMN headerReferences TEXT NOT NULL DEFAULT ''")
                 db.execSQL("ALTER TABLE email_messages ADD COLUMN toRecipients TEXT NOT NULL DEFAULT ''")
                 db.execSQL("ALTER TABLE email_messages ADD COLUMN ccRecipients TEXT NOT NULL DEFAULT ''")
+            }
+        }
+
+        /**
+         * v5 -> v6: create `labels` + `email_label_cross_ref` tables.
+         * Fresh tables, no data to preserve — labels sync from server.
+         */
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS labels (" +
+                        "id TEXT PRIMARY KEY NOT NULL, " +
+                        "name TEXT NOT NULL DEFAULT '', " +
+                        "type TEXT NOT NULL DEFAULT 'user', " +
+                        "messageCount INTEGER NOT NULL DEFAULT 0)"
+                )
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS email_label_cross_ref (" +
+                        "messageId TEXT NOT NULL, " +
+                        "labelId TEXT NOT NULL, " +
+                        "PRIMARY KEY (messageId, labelId))"
+                )
             }
         }
     }

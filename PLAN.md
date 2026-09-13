@@ -26,15 +26,16 @@ Living planning document. Check off items as they ship.
 - [x] `ComposeViewModel.prepareReply`: To/Cc prefill, `Re:`/`Fwd:` subjects, `In-Reply-To` + `References` threading, self excluded from Reply All via AuthManager
 - [ ] Forward attaches original email as `.eml` (fast-follow; inline block for now)
 
-### Label Management
-- [ ] `GET /gmail/v1/users/me/labels` endpoint
-- [ ] `POST /gmail/v1/users/me/labels` (create) endpoint
-- [ ] `POST /gmail/v1/users/me/labels/{id}` (modify/delete) endpoint
-- [ ] `Label` Room entity (`id`, `name`, `color`, `isSystem`, `messageCount`)
-- [ ] `EmailLabelCrossRef` (messageId, labelId) for many-to-many
-- [ ] `LabelManagerScreen` — list/create/delete labels
-- [ ] Label picker bottom sheet in compose/reply
-- [ ] Label filter chips in search
+### Label Management (v1)
+- [x] `GET /gmail/v1/users/me/labels` endpoint
+- [x] `POST /gmail/v1/users/me/labels` (create) endpoint
+- [x] `PATCH /gmail/v1/users/me/labels/{id}` (rename) + `DELETE` endpoints
+- [x] `Label` Room entity + `EmailLabelCrossRef` many-to-many (DB v5→v6)
+- [x] `LabelManagerScreen` — list/create/rename/delete (system labels read-only)
+- [x] Reader `LabelSection` — applied chips + ADD picker dialog with inline create
+- [x] `labels` route, wired via reader MANAGE link
+- [ ] Label picker bottom sheet in compose/reply (fast-follow)
+- [ ] Label filter chips in search (fast-follow)
 
 ### Conversation View
 - [ ] Room query: `GROUP BY threadId` with `MAX(timestamp)` ordering

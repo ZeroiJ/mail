@@ -17,6 +17,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.mail.ui.screens.auth.SignInScreen
 import com.example.mail.ui.screens.compose.ComposeScreen
+import com.example.mail.ui.screens.labels.LabelManagerScreen
 import com.example.mail.ui.screens.reader.ReaderScreen
 import com.example.mail.ui.screens.search.SearchScreen
 import com.example.mail.ui.screens.triage.TriageScreen
@@ -119,7 +120,15 @@ class MainActivity : AppCompatActivity() {
                                 onBack = { navController.popBackStack() },
                                 onReply = { mode ->
                                     navController.navigate("compose?replyTo=$emailId&mode=$mode")
+                                },
+                                onManageLabels = {
+                                    navController.navigate("labels")
                                 }
+                            )
+                        }
+                        composable("labels") {
+                            LabelManagerScreen(
+                                onBack = { navController.popBackStack() }
                             )
                         }
                     }

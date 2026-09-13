@@ -9,10 +9,15 @@ import com.example.mail.data.local.Draft
 import com.example.mail.data.local.DraftDao
 import com.example.mail.data.local.EmailDao
 import com.example.mail.data.local.EmailMessage
+import com.example.mail.data.local.Label
+import com.example.mail.data.local.LabelDao
+import com.example.mail.data.local.EmailLabelCrossRef
 import com.example.mail.data.remote.GmailApiService
+import com.example.mail.data.remote.dto.CreateLabelRequest
 import com.example.mail.data.remote.dto.MessageDetailDto
 import com.example.mail.data.remote.dto.MessagePartDto
 import com.example.mail.data.remote.dto.ModifyMessageRequest
+import com.example.mail.data.remote.dto.PatchLabelRequest
 import com.example.mail.data.remote.dto.SendMessageRequest
 import com.example.mail.domain.repository.EmailRepository
 import com.example.mail.util.AutoBundler
@@ -33,6 +38,7 @@ import javax.inject.Singleton
 class EmailRepositoryImpl @Inject constructor(
     private val emailDao: EmailDao,
     private val draftDao: DraftDao,
+    private val labelDao: LabelDao,
     private val gmailApi: GmailApiService,
     private val gemini: GeminiProcessor
 ) : EmailRepository {
@@ -260,6 +266,95 @@ class EmailRepositoryImpl @Inject constructor(
     override suspend fun deleteDraft(draftId: Long) = withContext(Dispatchers.IO) {
         draftDao.deleteById(draftId)
     }
+
+    override fun getLabels(): Flow<List<Label>> = labelDao.getAll()
+
+    override suspend fun syncLabels() = withContext(Dispatchers.IO) {
+        runCatching {
+            val remote = gmailApi.listLabels().labels
+            labelDao.deleteAllUserLabels()
+            labelDao.upsertAll(
+                remote.map {
+                    Label(
+                        id = it.id,
+                        name = it.name,
+                        type = it.type ?: "user"
+                    )
+                }
+            )
+        }.onFailure { e ->
+            Log.e(tag, "Label sync failed: ${e.message}")
+        }
+        Unit
+    }
+
+    override suspend fun createLabel(name: String): String? = withContext(Dispatchers.IO) {
+        runCatching {
+            val created = gmailApi.createLabel(request = CreateLabelRequest(name = name.trim()))
+            labelDao.upsert(Label(id = created.id, name = created.name, type = "user"))
+            created.id
+        }.getOrElse { e ->
+            Log.e(tag, "Create label failed: ${e.message}")
+            null
+        }
+    }
+
+    override suspend fun renameLabel(labelId: String, name: String): Boolean =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val updated = gmailApi.patchLabel(id = labelId, request = PatchLabelRequest(name = name.trim()))
+                labelDao.upsert(Label(id = updated.id, name = updated.name, type = "user"))
+                true
+            }.getOrElse { e ->
+                Log.e(tag, "Rename label failed: ${e.message}")
+                false
+            }
+        }
+
+    override suspend fun deleteLabel(labelId: String): Boolean = withContext(Dispatchers.IO) {
+        runCatching {
+            gmailApi.deleteLabel(id = labelId)
+            labelDao.deleteById(labelId)
+            true
+        }.getOrElse { e ->
+            Log.e(tag, "Delete label failed: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun applyLabel(messageId: String, labelId: String) {
+        withContext(Dispatchers.IO) {
+            labelDao.addCrossRef(EmailLabelCrossRef(messageId, labelId))
+            runCatching {
+                gmailApi.modifyMessage(
+                    id = messageId,
+                    request = ModifyMessageRequest(addLabelIds = listOf(labelId))
+                )
+            }.onFailure { e ->
+                Log.e(tag, "Apply label failed for $messageId: ${e.message}")
+            }
+        }
+    }
+
+    override suspend fun removeLabel(messageId: String, labelId: String) {
+        withContext(Dispatchers.IO) {
+            labelDao.removeCrossRef(messageId, labelId)
+            runCatching {
+                gmailApi.modifyMessage(
+                    id = messageId,
+                    request = ModifyMessageRequest(removeLabelIds = listOf(labelId))
+                )
+            }.onFailure { e ->
+                Log.e(tag, "Remove label failed for $messageId: ${e.message}")
+                labelDao.addCrossRef(EmailLabelCrossRef(messageId, labelId))
+            }
+        }
+    }
+
+    override suspend fun getMessageLabelIds(messageId: String): List<String> =
+        withContext(Dispatchers.IO) {
+            labelDao.getLabelIdsForMessage(messageId)
+        }
 
     private fun buildRfc822(
         to: String,

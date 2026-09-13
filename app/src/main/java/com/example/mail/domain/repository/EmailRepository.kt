@@ -94,4 +94,28 @@ interface EmailRepository {
 
     /** Delete a local draft by row ID. */
     suspend fun deleteDraft(draftId: Long)
+
+    /** All labels (system + user), synced from Gmail. */
+    fun getLabels(): Flow<List<com.example.mail.data.local.Label>>
+
+    /** Pull the label list from Gmail and upsert locally. */
+    suspend fun syncLabels()
+
+    /** Create a user label on Gmail and cache it. Returns the label ID or null. */
+    suspend fun createLabel(name: String): String?
+
+    /** Rename a user label on Gmail and locally. */
+    suspend fun renameLabel(labelId: String, name: String): Boolean
+
+    /** Delete a user label on Gmail and locally. */
+    suspend fun deleteLabel(labelId: String): Boolean
+
+    /** Apply a label to a message (server + local cross-ref). */
+    suspend fun applyLabel(messageId: String, labelId: String)
+
+    /** Remove a label from a message (server + local cross-ref). */
+    suspend fun removeLabel(messageId: String, labelId: String)
+
+    /** Label IDs currently on a message, from the local cross-ref table. */
+    suspend fun getMessageLabelIds(messageId: String): List<String>
 }

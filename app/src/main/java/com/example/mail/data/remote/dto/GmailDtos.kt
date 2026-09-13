@@ -79,3 +79,30 @@ data class DraftDto(
 data class CreateDraftRequest(
     val message: SendMessageRequest
 )
+
+/** Response of `GET /gmail/v1/users/me/labels`. */
+@Serializable
+data class LabelListResponse(
+    val labels: List<GmailLabelDto> = emptyList()
+)
+
+/** A Gmail label. `type` is "system" or "user". */
+@Serializable
+data class GmailLabelDto(
+    val id: String,
+    val name: String,
+    val type: String? = null
+)
+
+/** Request body of `POST /gmail/v1/users/me/labels`. */
+@Serializable
+data class CreateLabelRequest(
+    val name: String,
+    val messageListVisibility: String = "show"
+)
+
+/** Request body of `PATCH /gmail/v1/users/me/labels/{id}`. */
+@Serializable
+data class PatchLabelRequest(
+    val name: String
+)

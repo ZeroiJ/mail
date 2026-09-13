@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Label Management (v1):** `Label` entity + `EmailLabelCrossRef` many-to-many (DB v5→v6). `listLabels`/`createLabel`/`patchLabel`/`deleteLabel` endpoints with optimistic local apply + rollback on failure. `LabelManagerScreen` (`labels` route) for create/rename/delete with system labels read-only. Reader `LabelSection` shows applied chips (tap to remove) + ADD picker dialog with inline create and MANAGE link.
+
+### Added
 - **Reply / Reply All / Forward (v1):** `EmailMessage` stores `rfcMessageId`, `headerReferences`, `toRecipients`, `ccRecipients` (DB v4→v5). Reader has REPLY / REPLY ALL / FORWARD pills routing to `compose?replyTo=&mode=`; `ComposeViewModel.prepareReply` prefills recipients, `Re:`/`Fwd:` subjects, `> ` quoted body, and `In-Reply-To` + `References` threading headers. Reply All merges To/Cc minus your own address.
 
 ### Changed

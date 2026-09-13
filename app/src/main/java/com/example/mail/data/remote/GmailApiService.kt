@@ -6,9 +6,14 @@ import com.example.mail.data.remote.dto.ModifyMessageRequest
 import com.example.mail.data.remote.dto.SendMessageRequest
 import com.example.mail.data.remote.dto.DraftDto
 import com.example.mail.data.remote.dto.CreateDraftRequest
+import com.example.mail.data.remote.dto.LabelListResponse
+import com.example.mail.data.remote.dto.GmailLabelDto
+import com.example.mail.data.remote.dto.CreateLabelRequest
+import com.example.mail.data.remote.dto.PatchLabelRequest
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
@@ -107,4 +112,28 @@ interface GmailApiService {
         @Path("userId") userId: String = "me",
         @Body request: Map<String, String>
     ): MessageDetailDto
+
+    @GET("gmail/v1/users/{userId}/labels")
+    suspend fun listLabels(
+        @Path("userId") userId: String = "me"
+    ): LabelListResponse
+
+    @POST("gmail/v1/users/{userId}/labels")
+    suspend fun createLabel(
+        @Path("userId") userId: String = "me",
+        @Body request: CreateLabelRequest
+    ): GmailLabelDto
+
+    @PATCH("gmail/v1/users/{userId}/labels/{id}")
+    suspend fun patchLabel(
+        @Path("userId") userId: String = "me",
+        @Path("id") id: String,
+        @Body request: PatchLabelRequest
+    ): GmailLabelDto
+
+    @DELETE("gmail/v1/users/{userId}/labels/{id}")
+    suspend fun deleteLabel(
+        @Path("userId") userId: String = "me",
+        @Path("id") id: String
+    )
 }

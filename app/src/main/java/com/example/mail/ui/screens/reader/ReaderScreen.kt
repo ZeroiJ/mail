@@ -58,6 +58,7 @@ import com.example.mail.util.HtmlStripper
 fun ReaderScreen(
     onBack: () -> Unit,
     onReply: (String) -> Unit = {},
+    onManageLabels: () -> Unit = {},
     viewModel: ReaderViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
@@ -72,7 +73,7 @@ fun ReaderScreen(
         if (message == null) {
             missingState(onBack = onBack)
         } else {
-            readerContent(email = message, onBack = onBack, onReply = onReply)
+            readerContent(email = message, onBack = onBack, onReply = onReply, onManageLabels = onManageLabels)
         }
     }
 }
@@ -93,7 +94,8 @@ private fun missingState(onBack: () -> Unit) {
 private fun readerContent(
     email: EmailMessage,
     onBack: () -> Unit,
-    onReply: (String) -> Unit
+    onReply: (String) -> Unit,
+    onManageLabels: () -> Unit
 ) {
     // Older rows may lack bodyMarkdown, so re-strip the HTML on the fly.
     val body = email.bodyMarkdown.ifBlank { HtmlStripper.strip(email.bodyHtml) }
@@ -118,6 +120,11 @@ private fun readerContent(
             onReply = { onReply("reply") },
             onReplyAll = { onReply("replyAll") },
             onForward = { onReply("forward") }
+        )
+
+        LabelSection(
+            messageId = email.id,
+            onManageLabels = onManageLabels
         )
 
         Column(
