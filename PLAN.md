@@ -9,6 +9,7 @@ Living planning document. Check off items as they ship.
 ### Compose (v1 — text + CC/BCC + local drafts)
 - [x] `POST /gmail/v1/users/me/messages/send` endpoint in `GmailApiService`
 - [x] `POST /gmail/v1/users/me/drafts` (create/update/delete) endpoints — saving mirrors to server (create then update by `serverDraftId`), delete removes server copy, offline degrades to local-only
+- [ ] Send via `drafts.send` (declared in `GmailApiService`, not wired — send uses `messages.send` directly)
 - [x] `Draft` Room entity (`id`, `to`, `cc`, `bcc`, `subject`, `body`, `serverDraftId`, `updatedAt`)
 - [x] `DraftDao` with upsert/update/delete/getById/getAll
 - [x] `ComposeScreen` — To/CC/BCC (collapsible) fields, subject, body, SEND + SAVE DRAFT
@@ -21,9 +22,9 @@ Living planning document. Check off items as they ship.
 
 ### Reply / Reply All / Forward (v1)
 - [x] Parse `Message-ID`, `References`, `To`, `Cc` headers into `EmailMessage` (DB v4→v5)
-- [x] Quote extraction: sender/date + `> ` prefixed body; forward header block
+- [x] Quote/`Fwd:` block builders deleted (`quoteOf`/`forwardedOf` removed from `ComposeViewModel`)
 - [x] REPLY / REPLY ALL / FORWARD pills in `ReaderScreen` → `compose?replyTo=&mode=` route
-- [x] `ComposeViewModel.prepareReply`: To/Cc prefill, `Re:`/`Fwd:` subjects, `In-Reply-To` + `References` threading, self excluded from Reply All via AuthManager
+- [x] `ComposeViewModel.prepareReply`: To/Cc prefill, `In-Reply-To` + `References` threading, self excluded from Reply All via AuthManager (quote/`Fwd:` prefill removed — reply/forward opens blank, see below)
 - [x] Reply/forward opens with blank subject + body (recipients + threading headers only; quote/`Fwd:` prefill removed per user request)
 - [ ] Forward attaches original email as `.eml` (fast-follow; inline block for now)
 
@@ -173,31 +174,50 @@ Living planning document. Check off items as they ship.
 - **v8→v9**: Add `Attachment` table (attachment management)
 
 ### New Gmail API Endpoints Required
-| Endpoint | Phase | Purpose |
-|----------|-------|---------|
-| `POST /messages/send` | 1 | Send email / reply / forward |
-| `POST /drafts` | 1 | Create draft |
-| `PUT /drafts/{id}` | 1 | Update draft |
-| `DELETE /drafts/{id}` | 1 | Delete draft |
-| `POST /drafts/{id}/send` | 1 | Send from draft |
-| `GET /labels` | 1 | List labels |
-| `POST /labels` | 1 | Create label |
-| `PUT /labels/{id}` | 1 | Modify label |
-| `DELETE /labels/{id}` | 1 | Delete label |
-| `POST /threads/{id}/modify` | 1 | Mark thread read / archive-delete conversation (`removeLabelIds`/`addLabelIds`) |
-| `GET /messages/{id}/attachments/{attId}` | 3 | Download attachment |
-| `PUT /settings/update` | 2 | Vacation responder |
+| Endpoint | Phase | Purpose | Status |
+|----------|-------|---------|--------|
+| `POST /messages/send` | 1 | Send email / reply / forward | SHIPPED (wired) |
+| `POST /drafts` | 1 | Create draft | SHIPPED (wired) |
+| `PUT /drafts/{id}` | 1 | Update draft | SHIPPED (wired) |
+| `DELETE /drafts/{id}` | 1 | Delete draft | SHIPPED (wired) |
+| `POST /drafts/{id}/send` | 1 | Send from draft | DECLARED, not wired (send uses `messages.send`) |
+| `GET /labels` | 1 | List labels | SHIPPED (wired) |
+| `POST /labels` | 1 | Create label | SHIPPED (wired) |
+| `PUT /labels/{id}` | 1 | Modify label | SHIPPED (wired) |
+| `DELETE /labels/{id}` | 1 | Delete label | SHIPPED (wired) |
+| `POST /threads/{id}/modify` | 1 | Mark thread read / archive-delete conversation (`removeLabelIds`/`addLabelIds`) | SHIPPED (wired) |
+| `GET /messages/{id}/attachments/{attId}` | 3 | Download attachment | TODO (no code) |
+| `PUT /settings/update` | 2 | Vacation responder | TODO (no code) |
 
 ### New Dependencies
-- `androidx.datastore:datastore-preferences` — settings storage
+- `androidx.datastore:datastore-preferences` — settings storage (not added yet; no DataStore usage in code)
 - `androidx.work:work-runtime-ktx` — already present
-- Coil or Glide — contact photo caching
-- Google Calendar API — event detection + RSVP
-- Google People API — contact sync
+- Coil or Glide — contact photo caching (not added yet)
+- Google Calendar API — event detection + RSVP (not added yet)
+- Google People API — contact sync (not added yet)
 
 ---
 
 ## Done
+
+### Unreleased (on device + pushed, no GitHub release yet)
+- [x] v1.2.1: Reply/forward opens with blank subject + body (recipients + threading headers only)
+- [x] v1.2.2: Server drafts sync (create/update/delete mirrored, offline degrades to local-only)
+
+### v1.2.0 (shipped 2026-09-13)
+- [x] Search v1 (network search + upsert, debounced UI, `search` route)
+- [x] HTML reader (sandboxed WebView, mobile viewport mode, external links in browser)
+- [x] Full inbox sync (`in:inbox`, batch loading with pageToken + LOAD MORE)
+- [x] Compose v1 (send via `messages.send`, CC/BCC, local drafts table)
+- [x] Reply / Reply All / Forward v1 (threading headers, Reply All minus self)
+- [x] Label Management v1 (entity + cross-ref, manager screen, reader chips + picker)
+- [x] Conversation View (thread-grouped deck, unread badges, expand/collapse, mark-read-on-open, DB v7)
+- [x] OTP keyword-context fix, snooze-swipe removal, NothingDock + edge-to-edge, transparent triage header
+
+### v1.1.0 (shipped 2026-09-11)
+- [x] Silent token refresh (no forced re-login), FloatingIsland onClick wiring
+- [x] Base64 URL-safe decoding fix, correct WEB_CLIENT_ID, GET_ACCOUNTS permission
+- [x] Release keystore signing, GitHub Actions workflow removed (local releases)
 
 ### v1.0.0 (shipped)
 - [x] Room entity with 13 fields
