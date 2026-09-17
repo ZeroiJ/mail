@@ -123,10 +123,15 @@ interface EmailRepository {
     /** All local drafts, newest first. */
     fun getDrafts(): Flow<List<com.example.mail.data.local.Draft>>
 
-    /** Insert or update a local draft. Returns the row ID. */
-    suspend fun saveDraft(draft: com.example.mail.data.local.Draft): Long
+    /**
+     * Insert or update a draft locally, then mirror it to the server
+     * (create or update by `serverDraftId`). Returns the saved row with
+     * the server ID filled in. Local save always succeeds; server sync
+     * failures degrade to offline mode.
+     */
+    suspend fun saveDraft(draft: com.example.mail.data.local.Draft): com.example.mail.data.local.Draft
 
-    /** Delete a local draft by row ID. */
+    /** Delete a draft locally and on the server. */
     suspend fun deleteDraft(draftId: Long)
 
     /** All labels (system + user), synced from Gmail. */

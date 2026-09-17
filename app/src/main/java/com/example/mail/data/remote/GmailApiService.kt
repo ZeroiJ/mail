@@ -15,6 +15,7 @@ import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.PATCH
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -108,6 +109,17 @@ interface GmailApiService {
     @POST("gmail/v1/users/{userId}/drafts")
     suspend fun createDraft(
         @Path("userId") userId: String = "me",
+        @Body request: CreateDraftRequest
+    ): DraftDto
+
+    /**
+     * Update a server-side draft. Backed by
+     * `PUT /gmail/v1/users/{userId}/drafts/{id}`.
+     */
+    @PUT("gmail/v1/users/{userId}/drafts/{id}")
+    suspend fun updateDraft(
+        @Path("userId") userId: String = "me",
+        @Path("id") id: String,
         @Body request: CreateDraftRequest
     ): DraftDto
 

@@ -14,6 +14,7 @@ import com.example.mail.data.local.Label
 import com.example.mail.data.local.LabelDao
 import com.example.mail.data.local.EmailLabelCrossRef
 import com.example.mail.data.remote.GmailApiService
+import com.example.mail.data.remote.dto.CreateDraftRequest
 import com.example.mail.data.remote.dto.CreateLabelRequest
 import com.example.mail.data.remote.dto.MessageDetailDto
 import com.example.mail.data.remote.dto.MessagePartDto
@@ -329,12 +330,39 @@ class EmailRepositoryImpl @Inject constructor(
 
     override fun getDrafts(): Flow<List<Draft>> = draftDao.getAll()
 
-    override suspend fun saveDraft(draft: Draft): Long = withContext(Dispatchers.IO) {
-        draftDao.upsert(draft.copy(updatedAt = System.currentTimeMillis()))
+    override suspend fun saveDraft(draft: Draft): Draft = withContext(Dispatchers.IO) {
+        val stamped = draft.copy(updatedAt = System.currentTimeMillis())
+        val rowId = draftDao.upsert(stamped)
+        val localId = if (stamped.id != 0L) stamped.id else rowId
+        val synced = runCatching {
+            val raw = buildRfc822(
+                stamped.to, stamped.cc, stamped.bcc,
+                stamped.subject, stamped.body, "", ""
+            )
+            val encoded = Base64.encodeToString(raw, Base64.URL_SAFE or Base64.NO_WRAP)
+            val request = CreateDraftRequest(message = SendMessageRequest(raw = encoded))
+            val serverId = stamped.serverDraftId
+            val remote = if (!serverId.isNullOrBlank()) {
+                runCatching { gmailApi.updateDraft(id = serverId, request = request) }
+                    .getOrElse { gmailApi.createDraft(request = request) }
+            } else {
+                gmailApi.createDraft(request = request)
+            }
+            stamped.copy(id = localId, serverDraftId = remote.id)
+        }.onFailure { e ->
+            Log.e(tag, "Draft server sync failed: ${e.message}")
+        }.getOrDefault(stamped.copy(id = localId))
+        draftDao.upsert(synced)
+        synced
     }
 
     override suspend fun deleteDraft(draftId: Long) = withContext(Dispatchers.IO) {
+        val serverId = draftDao.getById(draftId)?.serverDraftId
         draftDao.deleteById(draftId)
+        if (!serverId.isNullOrBlank()) {
+            runCatching { gmailApi.deleteDraft(id = serverId) }
+                .onFailure { e -> Log.e(tag, "Server draft delete failed: ${e.message}") }
+        }
     }
 
     override fun getLabels(): Flow<List<Label>> = labelDao.getAll()

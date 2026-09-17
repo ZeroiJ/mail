@@ -39,6 +39,7 @@ class ComposeViewModel @Inject constructor(
     val sendResult: StateFlow<Boolean?> = _sendResult.asStateFlow()
 
     private var editingDraftId: Long = 0L
+    private var editingServerDraftId: String? = null
     private var inReplyTo: String = ""
     private var references: String = ""
     private var replyPrepared = false
@@ -92,6 +93,7 @@ class ComposeViewModel @Inject constructor(
 
     fun loadDraft(draft: Draft) {
         editingDraftId = draft.id
+        editingServerDraftId = draft.serverDraftId
         to.value = draft.to
         cc.value = draft.cc
         bcc.value = draft.bcc
@@ -126,16 +128,19 @@ class ComposeViewModel @Inject constructor(
 
     fun saveDraft(onDone: () -> Unit) {
         viewModelScope.launch {
-            repository.saveDraft(
+            val saved = repository.saveDraft(
                 Draft(
                     id = editingDraftId,
                     to = to.value.trim(),
                     cc = cc.value.trim(),
                     bcc = bcc.value.trim(),
                     subject = subject.value.trim(),
-                    body = body.value
+                    body = body.value,
+                    serverDraftId = editingServerDraftId
                 )
             )
+            editingDraftId = saved.id
+            editingServerDraftId = saved.serverDraftId
             onDone()
         }
     }
