@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Monochrome archive swipe:** the right-swipe feedback was green (`#1B5E20` tint, `#4CAF50` label) — replaced with a white tint + white label per Nothing monochrome discipline. Delete stays StarkRed. Version bumped to 1.2.4 (versionCode 7).
+
+### Changed
 - **App drawer (Wave 1 shell):** hamburger pill in the triage header opens a Nothing-styled drawer (black panel, N-Dot section dividers, inverted-pill selection). Sections: MAILBOX (Inbox), SMART BUNDLES (Purchases→receipt, Promotions→newsletter, Social, Updates→logistics — direct filter set, no more cycling), SYSTEM (Labels route). Header shows the signed-in account email. Version bumped to 1.2.3 (versionCode 6).
 
 ### Changed
