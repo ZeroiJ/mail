@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Single red token:** `StarkRedAlt` (`#E53935`, Material red) deleted — `errorContainer` now uses StarkRed (`#D71921`). One red in the whole palette. Version bumped to 1.2.5 (versionCode 8).
+
+### Changed
 - **Monochrome archive swipe:** the right-swipe feedback was green (`#1B5E20` tint, `#4CAF50` label) — replaced with a white tint + white label per Nothing monochrome discipline. Delete stays StarkRed. Version bumped to 1.2.4 (versionCode 7).
 
 ### Changed
