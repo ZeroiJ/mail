@@ -65,6 +65,22 @@ Living planning document. Check off items as they ship.
 - [ ] `AccountSettingsScreen` — per-account inbox type, notifications, sync toggle
 - [ ] `SyncWorker` handles multiple accounts sequentially
 
+### App Drawer (Nothing OS — hamburger navigation)
+Gmail-style drawer rebuilt in monochrome: black scrim, slide-in panel, N-Dot section dividers (`MAILBOX` / `SMART BUNDLES` / `SYSTEM`), Geist rows, selected row = inverted pill (white bg, black text), stark red only for Bin. Account email in the header (switcher arrives with Multi-Account). Gmail categories map to local bundles, not server labels: Primary→no filter, Promotions→NEWSLETTER, Social→SOCIAL, Updates→LOGISTICS, Purchases→RECEIPT, Forums→new mailing-list bundle (no analogue today).
+- [x] Drawer shell: `DrawerContent` component + hamburger in triage header + direct `setBundleFilter` in `TriageViewModel` (today the filter only cycles)
+- [x] Destinations on existing data: Inbox, Purchases, Promotions, Social, Updates, Labels route
+- [ ] Drafts screen: list from `getDrafts`, tap to edit via `loadDraft`, delete with server cleanup
+- [ ] Subscriptions screen: NEWSLETTER senders list (unsubscribe needs `List-Unsubscribe` header — not stored; sender list only for v1)
+- [ ] Forums bundle: mailing-list classifier in `AutoBundler` (List-Unsubscribe header / groups senders) + drawer entry
+- [ ] Starred: star/unstar repo methods (`STARRED` add/remove via `modifyMessage`) + cross-ref tracking during sync + Starred view
+- [ ] Snoozed view: DAO query (`snoozedUntil` > now) + screen
+- [ ] Sent view: sync must include `in:sent` + view (sync is `in:inbox` only today)
+- [ ] Spam / Trash views: rows are dropped locally on action — needs tombstones or on-demand server fetch (decision open)
+- [ ] All Mail view: same tombstone question as Spam/Trash (archive drops rows today)
+- [ ] Per-destination unread counts in drawer rows (fast-follow)
+- [ ] Scheduled / Outbox: DEFERRED — no send scheduler exists; revisit if scheduled-send is planned
+- [ ] Account switcher in drawer header: DEFERRED to Multi-Account
+
 ---
 
 ## Phase 2 — Notifications & Settings (P1)

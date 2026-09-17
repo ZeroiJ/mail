@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **App drawer (Wave 1 shell):** hamburger pill in the triage header opens a Nothing-styled drawer (black panel, N-Dot section dividers, inverted-pill selection). Sections: MAILBOX (Inbox), SMART BUNDLES (Purchases→receipt, Promotions→newsletter, Social, Updates→logistics — direct filter set, no more cycling), SYSTEM (Labels route). Header shows the signed-in account email. Version bumped to 1.2.3 (versionCode 6).
+
+### Changed
 - **Server drafts sync:** saving a draft now mirrors it to Gmail (`drafts.create` on first save, `drafts.update` after — with create-fallback if the server copy is gone). Deleting a draft removes the server copy too. The local save always succeeds; server failures degrade silently to offline mode. `saveDraft` returns the saved row with `serverDraftId` filled in so re-saves update instead of duplicating. Version bumped to 1.2.2 (versionCode 5).
 
 ### Changed
