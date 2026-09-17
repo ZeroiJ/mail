@@ -24,4 +24,3 @@ val MutedGray = Color(0xFF8E8E93)
 
 // Nothing Stark Red — alerts, destructive actions, OTP countdowns only.
 val StarkRed = Color(0xFFD71921)
-val StarkRedAlt = Color(0xFFE53935)

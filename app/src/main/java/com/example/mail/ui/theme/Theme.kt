@@ -27,7 +27,7 @@ private val NothingColorScheme = darkColorScheme(
     outlineVariant = BorderGray,
     error = StarkRed,
     onError = OLEDBlack,
-    errorContainer = StarkRedAlt,
+    errorContainer = StarkRed,
     onErrorContainer = OLEDBlack
 )
 
