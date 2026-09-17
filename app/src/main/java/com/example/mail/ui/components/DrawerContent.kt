@@ -13,12 +13,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mail.ui.theme.BorderGray
@@ -57,9 +55,10 @@ fun DrawerContent(
         Text(
             text = "MAIL",
             fontFamily = NDot,
-            fontSize = 22.sp,
+            fontSize = 28.sp,
             color = PureWhite
         )
+        Spacer(modifier = Modifier.height(10.dp))
         if (!accountEmail.isNullOrBlank()) {
             Text(
                 text = accountEmail,
@@ -143,8 +142,6 @@ private fun DrawerRow(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(50))
-            .background(if (selected) PureWhite else OLEDBlack)
             .clickable(onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 10.dp)
     ) {
@@ -152,7 +149,7 @@ private fun DrawerRow(
             text = label.uppercase(),
             fontFamily = NDot,
             fontSize = 13.sp,
-            color = if (selected) OLEDBlack else PureWhite
+            color = if (selected) PureWhite else MutedGray
         )
     }
 }
