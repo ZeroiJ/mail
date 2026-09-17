@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Bigger header icons:** hamburger, compose, and sync glyphs go from 14dp to 18dp. Version bumped to 1.2.6 (versionCode 9).
+
+### Changed
 - **Single red token:** `StarkRedAlt` (`#E53935`, Material red) deleted — `errorContainer` now uses StarkRed (`#D71921`). One red in the whole palette. Version bumped to 1.2.5 (versionCode 8).
 
 ### Changed
