@@ -12,9 +12,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
@@ -55,19 +52,14 @@ class ComposeViewModel @Inject constructor(
                 MODE_REPLY_ALL -> {
                     to.value = extractAddress(original.sender)
                     cc.value = mergeRecipients(original)
-                    subject.value = withPrefix(original.subject, "Re:")
                     applyThreading(original)
-                    body.value = "\n\n" + quoteOf(original)
                 }
                 MODE_FORWARD -> {
-                    subject.value = withPrefix(original.subject, "Fwd:")
-                    body.value = forwardedOf(original)
+                    // To/subject/body stay blank; threading intentionally unset.
                 }
                 else -> {
                     to.value = extractAddress(original.sender)
-                    subject.value = withPrefix(original.subject, "Re:")
                     applyThreading(original)
-                    body.value = "\n\n" + quoteOf(original)
                 }
             }
         }
@@ -87,31 +79,6 @@ class ComposeViewModel @Inject constructor(
             .filter { it.isNotBlank() && !it.equals(self, ignoreCase = true) }
             .distinct()
             .joinToString(", ")
-    }
-
-    private fun quoteOf(original: EmailMessage): String {
-        val plain = original.bodyMarkdown.ifBlank { original.snippet }
-        val quoted = plain.lines().joinToString("\n") { "> $it" }
-        return "On ${formatDate(original.timestamp)}, ${original.sender} wrote:\n$quoted"
-    }
-
-    private fun forwardedOf(original: EmailMessage): String {
-        val plain = original.bodyMarkdown.ifBlank { original.snippet }
-        return "\n\n---------- Forwarded message ----------\n" +
-            "From: ${original.sender}\n" +
-            "Date: ${formatDate(original.timestamp)}\n" +
-            "Subject: ${original.subject}\n" +
-            "To: ${original.toRecipients}\n\n$plain"
-    }
-
-    private fun formatDate(timestamp: Long): String {
-        val millis = if (timestamp < 1_000_000_000_000L) timestamp * 1000 else timestamp
-        return SimpleDateFormat("EEE, MMM d, yyyy 'at' h:mm a", Locale.US).format(Date(millis))
-    }
-
-    private fun withPrefix(subject: String, prefix: String): String {
-        return if (subject.startsWith("$prefix ", ignoreCase = true)) subject
-        else "$prefix $subject"
     }
 
     private fun extractAddress(raw: String): String {
