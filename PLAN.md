@@ -66,8 +66,8 @@ Living planning document. Check off items as they ship.
 - [ ] `SyncWorker` handles multiple accounts sequentially
 
 ### App Drawer (Nothing OS — hamburger navigation)
-Gmail-style drawer rebuilt in monochrome: black scrim, slide-in panel, N-Dot section dividers (`MAILBOX` / `SMART BUNDLES` / `SYSTEM`), Geist rows, selected row = inverted pill (white bg, black text), stark red only for Bin. Account email in the header (switcher arrives with Multi-Account). Gmail categories map to local bundles, not server labels: Primary→no filter, Promotions→NEWSLETTER, Social→SOCIAL, Updates→LOGISTICS, Purchases→RECEIPT, Forums→new mailing-list bundle (no analogue today).
-- [x] Drawer shell: `DrawerContent` component + hamburger in triage header + direct `setBundleFilter` in `TriageViewModel` (today the filter only cycles)
+Gmail-style drawer rebuilt in monochrome: black scrim, slide-in panel, N-Dot section dividers (`MAILBOX` / `SMART BUNDLES` / `SYSTEM`), uppercase N-Dot rows with text-hierarchy selection (white = active, gray = rest; no selection pill), 28sp MAIL header with spacing before the Geist account email. Account switcher arrives with Multi-Account. Gmail categories map to local bundles, not server labels: Primary→no filter, Promotions→NEWSLETTER, Social→SOCIAL, Updates→LOGISTICS, Purchases→RECEIPT, Forums→new mailing-list bundle (no analogue today).
+- [x] Drawer shell: `DrawerContent` component + hamburger in triage header + direct `setBundleFilter` in `TriageViewModel`
 - [x] Destinations on existing data: Inbox, Purchases, Promotions, Social, Updates, Labels route
 - [ ] Drafts screen: list from `getDrafts`, tap to edit via `loadDraft`, delete with server cleanup
 - [ ] Subscriptions screen: NEWSLETTER senders list (unsubscribe needs `List-Unsubscribe` header — not stored; sender list only for v1)
@@ -219,6 +219,11 @@ Gmail-style drawer rebuilt in monochrome: black scrim, slide-in panel, N-Dot sec
 ### Unreleased (on device + pushed, no GitHub release yet)
 - [x] v1.2.1: Reply/forward opens with blank subject + body (recipients + threading headers only)
 - [x] v1.2.2: Server drafts sync (create/update/delete mirrored, offline degrades to local-only)
+- [x] v1.2.3: App drawer shell (hamburger, bundle destinations, Labels route, account email header)
+- [x] v1.2.4: Monochrome archive swipe (green tint/label replaced with white)
+- [x] v1.2.5: Single red token (`StarkRedAlt` deleted, `errorContainer` uses StarkRed)
+- [x] v1.2.6: Bigger triage header icons (14dp to 18dp)
+- [x] v1.2.7: Drawer cleanup (white selection pill removed, 28sp MAIL header with spacing)
 
 ### v1.2.0 (shipped 2026-09-13)
 - [x] Search v1 (network search + upsert, debounced UI, `search` route)
