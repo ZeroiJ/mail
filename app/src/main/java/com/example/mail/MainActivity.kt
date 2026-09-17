@@ -78,6 +78,9 @@ class MainActivity : AppCompatActivity() {
                                 },
                                 onComposeClick = {
                                     navController.navigate("compose")
+                                },
+                                onLabelsClick = {
+                                    navController.navigate("labels")
                                 }
                             )
                         }

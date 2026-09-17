@@ -7,8 +7,10 @@ import androidx.paging.cachedIn
 import com.example.mail.data.local.ConversationItem
 import com.example.mail.data.local.EmailMessage
 import com.example.mail.domain.repository.EmailRepository
+import com.example.mail.util.AuthManager
 import com.example.mail.util.BundleType
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,8 +22,18 @@ import javax.inject.Inject
 
 @HiltViewModel
 class TriageViewModel @Inject constructor(
-    private val repository: EmailRepository
+    private val repository: EmailRepository,
+    private val authManager: AuthManager
 ) : ViewModel() {
+
+    private val _accountEmail = MutableStateFlow<String?>(null)
+    val accountEmail: StateFlow<String?> = _accountEmail.asStateFlow()
+
+    init {
+        viewModelScope.launch(Dispatchers.IO) {
+            _accountEmail.value = authManager.getStoredAccountName()
+        }
+    }
 
     private val _bundleFilter = MutableStateFlow<String?>(null)
     val bundleFilter: StateFlow<String?> = _bundleFilter.asStateFlow()
@@ -112,6 +124,10 @@ class TriageViewModel @Inject constructor(
 
     fun clearBundleFilter() {
         _bundleFilter.value = null
+    }
+
+    fun setBundleFilter(bundle: String?) {
+        _bundleFilter.value = bundle
     }
 
     private companion object {

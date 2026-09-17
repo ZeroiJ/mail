@@ -22,12 +22,17 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -35,6 +40,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,9 +57,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.paging.compose.collectAsLazyPagingItems
+import kotlinx.coroutines.launch
 import com.example.mail.data.local.ConversationItem
 import com.example.mail.data.local.EmailMessage
 import com.example.mail.ui.components.DockTab
+import com.example.mail.ui.components.DrawerContent
 import com.example.mail.ui.components.NothingDock
 import com.example.mail.ui.components.OtpCard
 import com.example.mail.ui.theme.BorderGray
@@ -93,7 +101,8 @@ fun TriageScreen(
     viewModel: TriageViewModel = hiltViewModel(),
     onEmailClick: (String) -> Unit = {},
     onSearchClick: () -> Unit = {},
-    onComposeClick: () -> Unit = {}
+    onComposeClick: () -> Unit = {},
+    onLabelsClick: () -> Unit = {}
 ) {
     val conversationItems = viewModel.conversations.collectAsLazyPagingItems()
     val otpItems = viewModel.otpEmails.collectAsLazyPagingItems()
@@ -101,6 +110,9 @@ fun TriageScreen(
     val isLoadingMore by viewModel.isLoadingMore.collectAsState()
     val hasMore by viewModel.hasMore.collectAsState()
     val bundleFilter by viewModel.bundleFilter.collectAsState()
+    val accountEmail by viewModel.accountEmail.collectAsState()
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val drawerScope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         viewModel.cleanupExpiredOtps()
@@ -121,6 +133,36 @@ fun TriageScreen(
             .fillMaxSize()
             .background(OLEDBlack)
     ) {
+        ModalNavigationDrawer(
+            drawerState = drawerState,
+            scrimColor = Color.Black.copy(alpha = 0.6f),
+            drawerContent = {
+                ModalDrawerSheet(
+                    drawerContainerColor = OLEDBlack,
+                    drawerContentColor = PureWhite
+                ) {
+                    DrawerContent(
+                        accountEmail = accountEmail,
+                        activeBundle = bundleFilter,
+                        onInbox = {
+                            drawerScope.launch { drawerState.close() }
+                            viewModel.setBundleFilter(null)
+                        },
+                        onBundle = { bundle ->
+                            drawerScope.launch { drawerState.close() }
+                            viewModel.setBundleFilter(bundle)
+                        },
+                        onLabels = {
+                            drawerScope.launch { drawerState.close() }
+                            onLabelsClick()
+                        }
+                    )
+                }
+            }
+        ) {
+        Box(
+            modifier = Modifier.fillMaxSize()
+        ) {
         // ── Deck (full-screen, scrolls behind overlays) ──────────────────
         TriageDeck(
             conversations = conversationItems,
@@ -195,6 +237,7 @@ fun TriageScreen(
                 isSyncing = isSyncing,
                 onSync = { viewModel.sync() },
                 onComposeClick = onComposeClick,
+                onMenuClick = { drawerScope.launch { drawerState.open() } },
                 activeFilter = bundleFilter,
                 onClearFilter = { viewModel.clearBundleFilter() }
             )
@@ -215,6 +258,8 @@ fun TriageScreen(
                 onSearch = onSearchClick
             )
         }
+        }
+        }
     }
 }
 
@@ -228,6 +273,7 @@ private fun TriageHeader(
     isSyncing: Boolean,
     onSync: () -> Unit,
     onComposeClick: () -> Unit = {},
+    onMenuClick: () -> Unit = {},
     activeFilter: String? = null,
     onClearFilter: () -> Unit = {}
 ) {
@@ -240,9 +286,24 @@ private fun TriageHeader(
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End,
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .border(1.dp, BorderGray, RoundedCornerShape(50))
+                    .clickable(onClick = onMenuClick)
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Menu,
+                    contentDescription = "Menu",
+                    tint = PureWhite,
+                    modifier = Modifier.size(14.dp)
+                )
+            }
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
