@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Server drafts sync:** saving a draft now mirrors it to Gmail (`drafts.create` on first save, `drafts.update` after — with create-fallback if the server copy is gone). Deleting a draft removes the server copy too. The local save always succeeds; server failures degrade silently to offline mode. `saveDraft` returns the saved row with `serverDraftId` filled in so re-saves update instead of duplicating. Version bumped to 1.2.2 (versionCode 5).
+
+### Changed
 - **Reply/forward no longer prefills subject or body:** `prepareReply` now fills only recipients (To, plus Cc on Reply All) and the invisible `In-Reply-To`/`References` threading headers. Subject and body open blank; the quote/`Fwd:` block builders were removed. Version bumped to 1.2.1 (versionCode 4).
 
 ### Added

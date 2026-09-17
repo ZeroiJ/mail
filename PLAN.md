@@ -8,7 +8,7 @@ Living planning document. Check off items as they ship.
 
 ### Compose (v1 — text + CC/BCC + local drafts)
 - [x] `POST /gmail/v1/users/me/messages/send` endpoint in `GmailApiService`
-- [ ] `POST /gmail/v1/users/me/drafts` (create/update/delete) endpoints — declared, local-first for now
+- [x] `POST /gmail/v1/users/me/drafts` (create/update/delete) endpoints — saving mirrors to server (create then update by `serverDraftId`), delete removes server copy, offline degrades to local-only
 - [x] `Draft` Room entity (`id`, `to`, `cc`, `bcc`, `subject`, `body`, `serverDraftId`, `updatedAt`)
 - [x] `DraftDao` with upsert/update/delete/getById/getAll
 - [x] `ComposeScreen` — To/CC/BCC (collapsible) fields, subject, body, SEND + SAVE DRAFT
