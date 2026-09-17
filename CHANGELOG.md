@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Reply/forward no longer prefills subject or body:** `prepareReply` now fills only recipients (To, plus Cc on Reply All) and the invisible `In-Reply-To`/`References` threading headers. Subject and body open blank; the quote/`Fwd:` block builders were removed. Version bumped to 1.2.1 (versionCode 4).
+
 ### Added
 - **Conversation View:** inbox deck now groups emails by Gmail thread (`GROUP BY threadId` via correlated `MAX(timestamp)` subquery — no window functions on minSdk 26's SQLite 3.18). Each deck row is the newest message per thread with a per-thread **unread count badge** (red-bordered N-Dot pill, white sender for unread threads). Swipe actions operate on the whole thread (`threads.modify`: archive removes `INBOX`, delete adds `TRASH`). `EmailMessage` gained `isRead` (DB v6→v7 migration + `threadId` index) synced from the `UNREAD` label. Opening the reader marks the thread read locally + on the server (one `POST /threads/{id}/modify` call, skipped when already read). Reader shows a expandable `THREAD · N` section under the message body — tapping a sibling expands it and collapses the prior focused message; reply/labels target the expanded message. Version bumped to 1.2 (versionCode 3).
 

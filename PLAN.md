@@ -24,6 +24,7 @@ Living planning document. Check off items as they ship.
 - [x] Quote extraction: sender/date + `> ` prefixed body; forward header block
 - [x] REPLY / REPLY ALL / FORWARD pills in `ReaderScreen` → `compose?replyTo=&mode=` route
 - [x] `ComposeViewModel.prepareReply`: To/Cc prefill, `Re:`/`Fwd:` subjects, `In-Reply-To` + `References` threading, self excluded from Reply All via AuthManager
+- [x] Reply/forward opens with blank subject + body (recipients + threading headers only; quote/`Fwd:` prefill removed per user request)
 - [ ] Forward attaches original email as `.eml` (fast-follow; inline block for now)
 
 ### Label Management (v1)
