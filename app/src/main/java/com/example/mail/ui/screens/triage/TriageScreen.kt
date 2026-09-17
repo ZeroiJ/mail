@@ -497,13 +497,13 @@ private fun SwipeableEmailCard(
     var offsetX by remember { mutableFloatStateOf(0f) }
     var dismissed by remember { mutableStateOf(false) }
 
-    // Visual feedback: red tint on delete, green tint on archive.
+    // Visual feedback: red tint on delete, white tint on archive.
     val backgroundColor = when {
         dismissed -> Color.Transparent
         offsetX < -SWIPE_THRESHOLD / 2 ->
             StarkRed.copy(alpha = 0.3f * (kotlin.math.abs(offsetX) / 300f).coerceIn(0f, 1f))
         offsetX > SWIPE_THRESHOLD / 2 ->
-            Color(0xFF1B5E20).copy(alpha = 0.3f * (offsetX / 300f).coerceIn(0f, 1f))
+            PureWhite.copy(alpha = 0.3f * (offsetX / 300f).coerceIn(0f, 1f))
         else -> SurfaceDark
     }
 
@@ -564,7 +564,7 @@ private fun SwipeableEmailCard(
                         fontSize = 10.sp,
                         color = when (swipeLabel) {
                             "DELETE" -> StarkRed
-                            else -> Color(0xFF4CAF50)
+                            else -> PureWhite
                         }
                     )
                 }
