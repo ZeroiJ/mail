@@ -301,7 +301,7 @@ private fun TriageHeader(
                     imageVector = Icons.Outlined.Menu,
                     contentDescription = "Menu",
                     tint = PureWhite,
-                    modifier = Modifier.size(14.dp)
+                    modifier = Modifier.size(18.dp)
                 )
             }
             Row(
@@ -366,7 +366,7 @@ private fun ComposeButton(onCompose: () -> Unit) {
             imageVector = Icons.Outlined.Edit,
             contentDescription = "Compose",
             tint = OLEDBlack,
-            modifier = Modifier.size(14.dp)
+            modifier = Modifier.size(18.dp)
         )
     }
 }
@@ -395,7 +395,7 @@ private fun SyncButton(
                 imageVector = Icons.Outlined.Refresh,
                 contentDescription = "Sync",
                 tint = MutedGray,
-                modifier = Modifier.size(14.dp)
+                modifier = Modifier.size(18.dp)
             )
         }
     }
