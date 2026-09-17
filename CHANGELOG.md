@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Drawer cleanup:** removed the white selected-pill — active destination now shows white text, rest gray. MAIL header bumped to 28sp with spacing before the account email. Version bumped to 1.2.7 (versionCode 10).
+
+### Changed
 - **Bigger header icons:** hamburger, compose, and sync glyphs go from 14dp to 18dp. Version bumped to 1.2.6 (versionCode 9).
 
 ### Changed
